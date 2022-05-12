@@ -1,17 +1,28 @@
+package DataBase;
+
 import java.util.Date;
 
 public class Message {
-
+    private MessageType type;
     private int from;
     private int to;
     private Date time;
     private String body;
 
-    public Message(int from, int to, Date time, String body) {
+    public Message(MessageType type, int from, int to, Date time, String body) {
+        this.type = type;
         this.from = from;
         this.to = to;
         this.time = time;
         this.body = body;
+    }
+
+    public MessageType getType() {
+        return type;
+    }
+
+    public void setType(MessageType type) {
+        this.type = type;
     }
 
     public int getFrom() {
