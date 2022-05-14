@@ -90,20 +90,15 @@ public class ServerThread implements Runnable {
         writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
         writer.flush();
     }
-
-    private void login(String username, String password) throws SQLException {
+    private void login(String username, String password) throws SQLException, IOException {
 
         System.out.println("username:" + username + " password:" + password);
         //数据库验证账号密码
         id = DataBase.User.userValidate(username, password);
         if (id != -1) {
             Server.clientMap.put(id, socket);
-            try {
-                PrintWriter writer = new PrintWriter(socket.getOutputStream());
-                send(writer, MessageType.SUCCESS, 0, id, "login success");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            PrintWriter writer = new PrintWriter(socket.getOutputStream());
+            send(writer, MessageType.SUCCESS, 0, id, "login success");
         } else {
             send(writer, MessageType.FAIL, 0, id, "login fail");
         }
