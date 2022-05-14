@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 public class ClientTest2 {
     public static void main(String[] args){
+
         Client client=new Client("localhost",1234);
         client.sendMsg(MessageType.LOGIN,0,"xyx1234;123456");
         String input;

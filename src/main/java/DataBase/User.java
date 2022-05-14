@@ -27,17 +27,19 @@ public class User {
         return ps.execute();
     }
 
-    public static boolean userValidate(int id, String password) throws SQLException {
+    public static int userValidate(String username, String password) throws SQLException {
         Connection conn = JDBC.getConnection();
-        PreparedStatement ps = conn.prepareStatement("SELECT password FROM user WHERE id = ?");
-        ps.setInt(1, id);
+        PreparedStatement ps = conn.prepareStatement("SELECT * FROM user WHERE username = ?");
+        ps.setString(1, username);
         ResultSet rs = ps.executeQuery();
         if (rs.next())
         {
             String correctPw = rs.getString(1);
-            return correctPw.equals(password);
+            if (correctPw.equals(password)) {
+                return rs.getInt("id");
+            }
         }
-        else return false;
+        return -1;
     }
 
     public int getUserID() {

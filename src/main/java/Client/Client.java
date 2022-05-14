@@ -15,20 +15,21 @@ public class Client {
     private String hostName;
     private int port;
     private String userName;
-    private Integer id=-1;
+    private Integer id = -1;
     private Socket socket;
     private PrintWriter writer;
     private BufferedReader reader;
     private Gson gson = new Gson();
 
     public Client(String hostName, int port) {
+
         this.hostName = hostName;
         this.port = port;
         try {
-            socket=new Socket(hostName,port);
-            writer=new PrintWriter(socket.getOutputStream());
-            reader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            new Thread(new ClientRecieveThread(this,socket)).start();
+            socket = new Socket(hostName,port);
+            writer = new PrintWriter(socket.getOutputStream());
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            new Thread(new ClientReceiveThread(this,socket)).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -38,11 +39,11 @@ public class Client {
         writer.println(gson.toJson(new Message(type,id,to,new Date(),s)));
         writer.flush();
     }
-    public void closeConnect(){
-        if(writer!=null){
+    public void closeConnect() {
+        if(writer != null) {
             writer.close();
         }
-        if(reader!=null){
+        if(reader != null) {
             try {
                 reader.close();
             } catch (IOException e) {
