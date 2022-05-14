@@ -17,14 +17,14 @@ public class User {
         this.createTime = new Timestamp(System.currentTimeMillis());
     }
 
-    public static boolean userCreate(User user) throws SQLException {
+    public static void userCreate(User user) throws SQLException {
         Connection conn = JDBC.getConnection();
         PreparedStatement ps = conn.prepareStatement("INSERT INTO user VALUES(?, ?, ?, ?)");
         ps.setInt(1, user.id);
         ps.setString(2, user.password);
         ps.setString(3, user.username);
         ps.setTimestamp(4, user.createTime);
-        return ps.execute();
+        ps.execute();
     }
 
     public static int userValidate(String username, String password) throws SQLException {
@@ -40,6 +40,25 @@ public class User {
             }
         }
         return -1;
+    }
+
+    public static int getNewID() throws SQLException {
+        Connection conn = JDBC.getConnection();
+        PreparedStatement ps = conn.prepareStatement("SELECT id FROM user;");
+        ResultSet rs = ps.executeQuery();
+        int i = 1;
+        while (rs.next()) {
+            i++;
+        }
+        return i;
+    }
+
+    public static boolean isUsernameAvailable(String username) throws SQLException {
+        Connection conn = JDBC.getConnection();
+        PreparedStatement ps = conn.prepareStatement("SELECT * FROM user WHERE username = ?;");
+        ps.setString(1, username);
+        ResultSet rs = ps.executeQuery();
+        return !rs.next();
     }
 
     public int getUserID() {

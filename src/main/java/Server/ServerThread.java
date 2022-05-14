@@ -2,8 +2,10 @@ package Server;
 
 import DataBase.Message;
 import DataBase.MessageType;
+import DataBase.User;
 import com.google.gson.Gson;
 
+import java.awt.image.DataBuffer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,7 +21,7 @@ public class ServerThread implements Runnable {
 
     private Connection conn = null;
     public Socket socket;
-    private int id;
+    private int id = -1;
     private Gson gson = new Gson();
     private PrintWriter writer;
 
@@ -104,8 +106,16 @@ public class ServerThread implements Runnable {
         }
     }
 
-    private void register(String username, String password) {
+    private void register(String username, String password) throws SQLException {
         System.out.println("username:" + username + " password:" + password);
+        //验证用户名是否已存在
+        if (!DataBase.User.isUsernameAvailable(username)) {
+            send(writer, MessageType.FAIL, 0, id, "register fail");
+            return;
+        }
+        //创建用户
+        User usr = new User(DataBase.User.getNewID(), username, password);
+        DataBase.User.userCreate(usr);
     }
 
     //向用户所在的群聊通知该用户下线
