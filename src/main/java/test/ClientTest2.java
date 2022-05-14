@@ -10,7 +10,7 @@ public class ClientTest2 {
     public static void main(String[] args){
 
         Client client=new Client("localhost",1234);
-        client.register("xyx1234","123456");
+        client.login("xyx1234","123456");
         String input;
         Scanner in=new Scanner(System.in);
         while(!(input=in.nextLine()).isEmpty()) {

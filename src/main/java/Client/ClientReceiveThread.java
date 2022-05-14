@@ -30,8 +30,6 @@ public class ClientReceiveThread implements Runnable {
                 String str = reader.readLine();
                 Message message = gson.fromJson(str, Message.class);
                 String body = message.getBody();
-                String[] data;
-                PrintWriter writer;
                 SimpleDateFormat dateFormat = new SimpleDateFormat ("yyyy-MM-dd hh:mm:ss");
                 String date=dateFormat.format(message.getTime());
                 switch (message.getType()) {

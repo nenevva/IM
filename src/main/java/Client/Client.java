@@ -69,6 +69,7 @@ public class Client {
     }
 
     public void login(String userName,String password){
+        this.userName=userName;
         sendMsg(MessageType.LOGIN,0,""+userName+";"+password);
     }
 
@@ -77,6 +78,7 @@ public class Client {
     }
 
     public void sendGroupMsg(int to,String msg){
+        msg= userName+";"+msg;
         sendMsg(MessageType.GROUP_MSG,to,msg);
     }
 

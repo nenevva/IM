@@ -2,7 +2,6 @@ package test;
 
 
 import Client.Client;
-import DataBase.MessageType;
 
 import java.util.Scanner;
 

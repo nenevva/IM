@@ -78,7 +78,6 @@ public class ServerThread implements Runnable {
         } catch (SocketException e) {
             //Socket断开，用户离线
             logout(id);
-            Server.clientMap.remove(id);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (SQLException e) {
@@ -93,6 +92,7 @@ public class ServerThread implements Runnable {
         writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
         writer.flush();
     }
+
     private void login(String username, String password) throws SQLException, IOException {
 
         System.out.println("username:" + username + " password:" + password);
@@ -116,7 +116,7 @@ public class ServerThread implements Runnable {
         }
         //创建用户
         id=DataBase.User.getNewID();
-        User usr = new User(id, username, password);
+        User usr = new User(id, password, username);
         DataBase.User.userCreate(usr);
         send(writer,MessageType.SUCCESS,0,id,"register success");
     }
@@ -126,13 +126,14 @@ public class ServerThread implements Runnable {
         //遍历from所在的群聊列表，并sendGroup
         sendGroup(0, 0, "用户" + from + "已下线");
         System.out.println("用户" + from + "已下线");
+        Server.clientMap.remove(id);
     }
 
     //to为群聊id
     private void sendGroup(int from, int to, String body) {
 
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
-            if(entry.getKey()!=from) {
+            if(entry.getKey()!=from) {//跳过消息的发送者
                 try {
                     PrintWriter writer=new PrintWriter(entry.getValue().getOutputStream());
                     send(writer,MessageType.GROUP_MSG,from,to,body);
