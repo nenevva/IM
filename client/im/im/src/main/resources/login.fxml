@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="290.0" prefWidth="499.0" stylesheets="@bootstrap3.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="bupt.edu.controller.LoginController">
+    <children>
+        <Button fx:id="b1" layoutX="72.0" layoutY="208.0" onAction="#onButtonclick" prefHeight="36" prefWidth="100" text="登陆">
+            <AnchorPane.leftAnchor>72.0</AnchorPane.leftAnchor>
+            <AnchorPane.topAnchor>208.0</AnchorPane.topAnchor>
+        </Button>
+      <TextField fx:id="userid" layoutX="153.0" layoutY="80.0" prefHeight="24.0" prefWidth="305.0" />
+      <Label fx:id="lbTitle" layoutX="72.0" layoutY="85.0" prefHeight="20.0" prefWidth="72.0" text="用户名：" />
+      <Button fx:id="b2" onAction="#signIn" layoutX="312.0" layoutY="208.0" prefHeight="36" prefWidth="100" text="注册" />
+      <TextField fx:id="passwd" layoutX="153.0" layoutY="145.0" prefHeight="24.0" prefWidth="305.0" />
+      <Label layoutX="72.0" layoutY="151.0" prefHeight="20.0" prefWidth="72.0" text="密  码：" />
+      <Label layoutX="210.0" layoutY="37.0" text="Welcome">
+         <font>
+            <Font size="30.0" />
+         </font></Label>
+      <ImageView fitHeight="55.0" fitWidth="57.0" layoutX="122.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/tomato.png" />
+         </image>
+      </ImageView>
+    </children>
+
+</AnchorPane>

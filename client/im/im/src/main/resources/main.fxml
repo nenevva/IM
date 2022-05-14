@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<SplitPane fx:controller="bupt.edu.controller.MainController" dividerPositions="0.29797979797979796" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@bootstrap3.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <items>
+    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+         <children>
+            <VBox layoutX="-1.0" layoutY="-2.0" prefHeight="400.0" prefWidth="181.0">
+               <children>
+                  <HBox prefHeight="49.0" prefWidth="181.0">
+                     <children>
+                        <Label prefHeight="32.0" prefWidth="71.0" />
+                        <ImageView fitHeight="32.0" fitWidth="75.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/tomato.png" />
+                           </image>
+                        </ImageView>
+                        <Label alignment="TOP_LEFT" contentDisplay="TOP" prefHeight="32.0" prefWidth="141.0" text="聊天室" textOverrun="CLIP">
+                           <font>
+                              <Font size="27.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </HBox>
+                  <ListView fx:id="userList" prefHeight="389.0" prefWidth="181.0" />
+               </children>
+            </VBox>
+         </children></AnchorPane>
+    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+         <children>
+            <VBox layoutX="-5.0" layoutY="1.0" prefHeight="400.0" prefWidth="422.0">
+               <children>
+                  <Label prefHeight="144.0" prefWidth="422.0">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+                  <ListView fx:id="msgList" prefHeight="371.0" prefWidth="422.0" />
+                  <HBox prefHeight="25.0" prefWidth="329.0">
+                     <children>
+                        <Label prefHeight="31.0" prefWidth="247.0" />
+                        <Button fx:id="file" onAction="#sendFile" mnemonicParsing="false" prefHeight="31.0" prefWidth="89.0" text="文件" />
+                        <Button fx:id="send" onAction="#sendMsg" mnemonicParsing="false" prefHeight="31.0" prefWidth="80.0" text="发送" />
+                     </children>
+                  </HBox>
+                  <TextArea fx:id="textArea" prefHeight="200.0" prefWidth="200.0" />
+               </children>
+            </VBox>
+         </children></AnchorPane>
+  </items>
+</SplitPane>
