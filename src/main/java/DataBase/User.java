@@ -34,7 +34,8 @@ public class User {
         ResultSet rs = ps.executeQuery();
         if (rs.next())
         {
-            String correctPw = rs.getString(1);
+            String correctPw = rs.getString("password");
+            System.out.println(correctPw);
             if (correctPw.equals(password)) {
                 return rs.getInt("id");
             }

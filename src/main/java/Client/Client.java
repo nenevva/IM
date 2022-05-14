@@ -67,4 +67,20 @@ public class Client {
     public void setId(Integer id) {
         this.id = id;
     }
+
+    public void login(String userName,String password){
+        sendMsg(MessageType.LOGIN,0,""+userName+";"+password);
+    }
+
+    public void register(String userName,String password){
+        sendMsg(MessageType.REGISTER,0,""+userName+";"+password);
+    }
+
+    public void sendGroupMsg(int to,String msg){
+        sendMsg(MessageType.GROUP_MSG,to,msg);
+    }
+
+    public void sendPrivateMsg(int to,String msg){
+        sendMsg(MessageType.PRIVATE_MSG,to,msg);
+    }
 }

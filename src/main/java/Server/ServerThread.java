@@ -82,6 +82,7 @@ public class ServerThread implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (SQLException e) {
+            e.printStackTrace();
             System.out.println("数据库已离线");
         }
 
@@ -114,8 +115,10 @@ public class ServerThread implements Runnable {
             return;
         }
         //创建用户
-        User usr = new User(DataBase.User.getNewID(), username, password);
+        id=DataBase.User.getNewID();
+        User usr = new User(id, username, password);
         DataBase.User.userCreate(usr);
+        send(writer,MessageType.SUCCESS,0,id,"register success");
     }
 
     //向用户所在的群聊通知该用户下线
