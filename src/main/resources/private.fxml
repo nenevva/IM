@@ -9,7 +9,7 @@
 
 <VBox stylesheets="@bootstrap3.css" fx:controller="bupt.edu.controller.PrivateController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <ListView fx:id="listView" prefHeight="273.0" prefWidth="600.0" />
+      <VBox fx:id="private_info_vb" prefHeight="273.0" prefWidth="600.0" />
       <HBox prefHeight="34.0" prefWidth="600.0">
          <children>
             <Button fx:id="send" onAction="#sendMsg" mnemonicParsing="false" prefHeight="39.0" prefWidth="56.0" text="发送" />

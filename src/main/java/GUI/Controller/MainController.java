@@ -2,26 +2,27 @@ package GUI.Controller;
 
 import GUI.Model.Content;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
-import java.io.IOException;
-import java.net.*;
+import javafx.event.EventHandler;
+import java.io.IOException;import java.net.*;
 import java.util.Date;
 
 
 public class MainController {
     public static MainController instance;
-    private MulticastSocket socket = null;
-    private InetAddress braddress = null;
-    private DatagramPacket inpack = new DatagramPacket(new byte[4096], 4096);
-    private ServerSocket servrerSocket;
+    
     @FXML
     private ListView<String> userList;
     @FXML
@@ -94,25 +95,27 @@ public class MainController {
 //        }).start();
 //
 //        //userList 监听是否打开私聊窗口
-//        userList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-//            //s：改变前的值    t1：改变后的值
-//            @Override
-//            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-//                try{
-//                    Stage stage = new Stage();
-//			Content.privateUser = t1;
-//                    VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("private.fxml"));
-//                    Scene scene = new Scene(root);
-//                    stage.setScene(scene);
-//                    stage.setTitle(t1);
-//
-//                    stage.show();
-//                }catch(IOException e){
-//                    e.printStackTrace();
-//                }
-//
-//            }
-//        });
+        userList.setOnMouseClicked((event) -> {
+			String select = userList.getFocusModel().getFocusedItem();
+            try{
+                Stage stage = new Stage();
+                Content.foucedPrivateUser = select;
+                VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("private.fxml"));
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.setTitle(select);
+                stage.show();
+                stage.setOnCloseRequest(new EventHandler<WindowEvent>(){
+                    @Override
+                    public void handle(WindowEvent e){
+                        Content.privateChatWindows.remove(select);
+                    }
+                });
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+
+		});
     }
 
 
@@ -126,21 +129,21 @@ public class MainController {
 
 
     //刷新公聊信息
-    public void refreshTextList() {
+//    public void refreshTextList() {
 //        Platform.runLater(() -> {
 //            ObservableList<String> strList = FXCollections.observableArrayList(Content.getMsg());
 //            msgList.setItems(strList);
 //        });
-    }
+//    }
 
 
     //接受公聊信息
-    public void receiveBrMsg(){
-    }
+//    public void receiveBrMsg(){
+//    }
 
 
     //接受私聊信息
-    public void receivePrMsg(Socket socket){
+//    public void receivePrMsg(Socket socket){
 //        InputStream is = null;
 //        InputStreamReader isr = null;
 //        BufferedReader bf = null;
@@ -170,7 +173,7 @@ public class MainController {
 //        }catch(IOException e){
 //            e.printStackTrace();
 //        }
-    }
+//  }
 
 
     @FXML

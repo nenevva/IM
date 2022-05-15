@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 public class ClientReceiveThread implements Runnable {
 
@@ -62,14 +63,27 @@ public class ClientReceiveThread implements Runnable {
                         break;
                     case PRIVATE_MSG:
                         System.out.println(date+" "+message.getFrom()+"(私):"+body);
+                        String fromName1 = body.substring(0, body.indexOf(';'));
+                        String content1 = body.substring(body.indexOf(';')+1);
+                        if(Content.privateChatRecord.containsKey(fromName1)){
+                            Content.privateChatRecord.get(fromName1).add("0" + content1);
+                        }else{
+                            ArrayList<String> newRecord = new ArrayList<>();
+                            newRecord.add("1" + content1);
+                            Content.privateChatRecord.put(fromName1, newRecord);
+                        }
                         Platform.runLater(() ->{
                             //TODO 在此处调用PrivateController中的函数，更新消息
+                            if(Content.privateChatWindows.containsKey(fromName1)){
+                                Content.privateChatWindows.get(fromName1).addPrivate(fromName1, message.getFrom(), message.getTo(), message.getTime(), content1);
+                            }
                         });
                         break;
                     case FAIL:
                         System.out.println(date+" "+"System:"+body);
                         Content.userName="";
                         break;
+                    // case userList
                 }
             }
         }

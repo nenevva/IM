@@ -83,6 +83,7 @@ public class Client {
     }
 
     public void sendPrivateMsg(int to,String msg){
+        msg = Content.userName+";"+msg;
         sendMsg(MessageType.PRIVATE_MSG,to,msg);
     }
 }
