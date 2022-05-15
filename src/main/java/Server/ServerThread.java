@@ -41,7 +41,7 @@ public class ServerThread implements Runnable {
                 String str = reader.readLine();//读取客户端输入的内容
                 Message message = gson.fromJson(str, Message.class);
                 String body = message.getBody();
-                System.out.println(str);
+                System.out.println("receive:  "+str);
                 String[] data;
 
                 //TODO 用户在登录系统成功之前不能发送其它类型的信息
@@ -93,7 +93,7 @@ public class ServerThread implements Runnable {
     }
 
     private void send(PrintWriter writer, MessageType type, int from, int to, String body) {
-
+        System.out.println("send :"+gson.toJson(new Message(type, from, to, new Date(), body)));
         writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
         writer.flush();
     }
