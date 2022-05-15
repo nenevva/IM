@@ -36,7 +36,6 @@ public class User {
         if (rs.next())
         {
             String correctPw = rs.getString("password");
-            System.out.println(correctPw);
             if (correctPw.equals(password)) {
                 return rs.getInt("id");
             }

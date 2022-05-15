@@ -40,7 +40,12 @@ public class ServerThread implements Runnable {
             while (true) {
                 String str = reader.readLine();//读取客户端输入的内容
                 Message message = gson.fromJson(str, Message.class);
-                String body = message.getBody();
+                String body="";
+                if(message!=null)
+                    body = message.getBody();
+                else{
+                    continue;
+                }
                 System.out.println("receive:  "+str);
                 String[] data;
 
@@ -120,7 +125,7 @@ public class ServerThread implements Runnable {
         }
         //创建用户
         id=DataBase.User.getNewID();
-        User usr = new User(id, username, password);
+        User usr = new User(id, password, username);
         DataBase.User.userCreate(usr);
         send(writer,MessageType.SUCCESS,0,id,"register success");
     }
@@ -134,7 +139,7 @@ public class ServerThread implements Runnable {
 
     //to为群聊id
     private void sendGroup(int from, int to, String body) {
-
+        DataBase.ChatContent.saveMsg(from,to,body,new Date(),1);
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
             if(entry.getKey()!=from) {
                 try {
@@ -148,7 +153,7 @@ public class ServerThread implements Runnable {
     }
 
     private void sendPrivate(int from, int to, String body) {
-
+        DataBase.ChatContent.saveMsg(from,to,body,new Date(),0);
         Socket socketTo=Server.clientMap.get(to);
         if(socketTo==null) {
             send(writer, MessageType.FAIL, 0, from, "用户未上线");
@@ -172,7 +177,6 @@ public class ServerThread implements Runnable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println(nameList);
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
             if(entry.getKey()!=from) {
                 String name=nameList.get(nameList.indexOf(String.valueOf(entry.getKey()))+1);
