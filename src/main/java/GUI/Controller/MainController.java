@@ -222,4 +222,8 @@ public class MainController {
         main_info_vb.getChildren().add(hbox);
     }
 
+    public void updateUserList(){
+        Content.client.getUserList();
+    }
+
 }

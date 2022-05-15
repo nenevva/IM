@@ -36,6 +36,7 @@ public class ClientReceiveThread implements Runnable {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             while (true) {
                 String str = reader.readLine();
+                System.out.println("receive: "+str);
                 Message message = gson.fromJson(str, Message.class);
                 String body = message.getBody();
                 SimpleDateFormat dateFormat = new SimpleDateFormat ("yyyy-MM-dd hh:mm:ss");
@@ -49,6 +50,7 @@ public class ClientReceiveThread implements Runnable {
                         Platform.runLater(() ->{
                             loginController.changeMain();
                             mainController=MainController.getInstance();
+                            mainController.updateUserList();
                         });
                         break;
                     case GROUP_MSG:
@@ -83,7 +85,12 @@ public class ClientReceiveThread implements Runnable {
                         System.out.println(date+" "+"System:"+body);
                         Content.userName="";
                         break;
-                    // case userList
+                    case USER_LIST:
+                        parseUserList(body);
+                        break;
+                    case USER_NAME_LIST:
+                        parseUserNameList(body);
+                        break;
                 }
             }
         }
@@ -93,6 +100,23 @@ public class ClientReceiveThread implements Runnable {
 
         catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    private void parseUserList(String body){
+        String[] data=body.split(";");
+        for (int i = 0; i < data.length; i++) {
+            String[] user=data[i].split(":");
+            if(user.length<2)
+                break;
+            Content.userList.put(user[1], Integer.valueOf(user[0]));
+        }
+        System.out.println(Content.userList);
+    }
+
+    private void parseUserNameList(String body){
+        String[] data=body.split(";");
+        for (int i = 0; i < data.length; i++) {
+            //System.out.println(data[i].split(":")[0]+"   "+data[i].split(":")[1]);
         }
     }
 }
