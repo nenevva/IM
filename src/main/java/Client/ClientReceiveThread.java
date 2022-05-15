@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 
 public class ClientReceiveThread implements Runnable {
 
@@ -47,10 +48,33 @@ public class ClientReceiveThread implements Runnable {
                         break;
                     case FAIL:
                         System.out.println(date+" "+"System:"+body);
+                        break;
+                    case USER_LIST:
+                        parseUserList(body);
+                        break;
+                    case USER_NAME_LIST:
+                        parseUserNameList(body);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void parseUserList(String body){
+        String[] data=body.split(";");
+        HashMap<String, Integer> userList = new HashMap();
+        for (int i = 0; i < data.length; i++) {
+            String[] user=data[i].split(":");
+            userList.put(user[1], Integer.valueOf(user[0]));
+        }
+        System.out.println(userList);
+    }
+
+    private void parseUserNameList(String body){
+        String[] data=body.split(";");
+        for (int i = 0; i < data.length; i++) {
+            System.out.println(data[i].split(":")[0]+"   "+data[i].split(":")[1]);
         }
     }
 }

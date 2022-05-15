@@ -1,6 +1,7 @@
 package DataBase;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class User {
@@ -41,6 +42,19 @@ public class User {
             }
         }
         return -1;
+    }
+
+    public static ArrayList<String> getAllName() throws SQLException{
+        Connection conn = JDBC.getConnection();
+        PreparedStatement ps = conn.prepareStatement("SELECT * FROM user");
+        ResultSet rs = ps.executeQuery();
+        ArrayList<String> res=new ArrayList<>();
+        while (rs.next())
+        {
+            res.add(String.valueOf(rs.getInt("id")));
+            res.add(rs.getString("username"));
+        }
+        return res;
     }
 
     public static int getNewID() throws SQLException {

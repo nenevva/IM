@@ -83,4 +83,16 @@ public class Client {
     public void sendPrivateMsg(int to,String msg){
         sendMsg(MessageType.PRIVATE_MSG,to,msg);
     }
+
+    public void getUserList(){
+        sendMsg(MessageType.USER_LIST,0,"");
+    }
+
+    public void getGroupMsgLog(int groupID){
+        sendMsg(MessageType.GROUP_MSG_LOG,0, String.valueOf(groupID));
+    }
+
+    public void getPrivateMsgLog(int id){
+        sendMsg(MessageType.PRIVATE_MSG_LOG,0,""+this.id+";"+id);
+    }
 }

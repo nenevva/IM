@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
@@ -72,6 +73,9 @@ public class ServerThread implements Runnable {
                         break;
                     case PRIVATE_MSG:
                         sendPrivate(message.getFrom(), message.getTo(), message.getBody());
+                        break;
+                    case USER_LIST:
+                        sendUserList(message.getFrom());
                         break;
                 }
             }
@@ -157,5 +161,40 @@ public class ServerThread implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    //返回所有的在线用户
+    private void sendUserList(int from){
+        String body="";
+        ArrayList<String> nameList=null;
+        try {
+            nameList= User.getAllName();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        System.out.println(nameList);
+        for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
+            if(entry.getKey()!=from) {
+                String name=nameList.get(nameList.indexOf(String.valueOf(entry.getKey()))+1);
+                body+=entry.getKey()+":"+name+";";
+            }
+        }
+        send(writer, MessageType.USER_LIST, 0, from, body);
+    }
+
+    private void sendUserNameList(int from){
+        String body="";
+        ArrayList<String> nameList=null;
+        try {
+            nameList= User.getAllName();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        System.out.println(nameList);
+        for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
+            String name=nameList.get(nameList.indexOf(String.valueOf(entry.getKey()))+1);
+            body+=entry.getKey()+":"+name+";";
+        }
+        send(writer, MessageType.USER_NAME_LIST, 0, from, body);
     }
 }

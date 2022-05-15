@@ -15,6 +15,7 @@ public class ClientTest1 {
         Scanner in=new Scanner(System.in);
         while(!(input=in.nextLine()).isEmpty()) {
             client.sendPrivateMsg(2,input);
+            client.getUserList();
         }
     }
 }
