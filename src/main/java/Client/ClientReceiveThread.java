@@ -55,29 +55,27 @@ public class ClientReceiveThread implements Runnable {
                         break;
                     case GROUP_MSG:
                         System.out.println(date+" "+message.getFrom()+":"+body);
-                        String fromName=body.substring(0,body.indexOf(';'));
-                        String content=body.substring(body.indexOf(';')+1);
-                        System.out.println(date+" "+fromName+":"+content);
                         Platform.runLater(() ->{
                             //TODO 在此处调用MainController中的函数，更新消息
-                            mainController.addGroupMsg(fromName, message.getFrom(), message.getTo(), message.getTime(),content);
+                            mainController.addGroupMsg(message.getFrom(), message.getTo(), message.getTime(),body);
                         });
                         break;
                     case PRIVATE_MSG:
                         System.out.println(date+" "+message.getFrom()+"(私):"+body);
-                        String fromName1 = body.substring(0, body.indexOf(';'));
-                        String content1 = body.substring(body.indexOf(';')+1);
-                        if(Content.privateChatRecord.containsKey(fromName1)){
-                            Content.privateChatRecord.get(fromName1).add("0" + content1);
+
+                        if(Content.privateChatRecord.containsKey(message.getFrom())){
+                            Content.privateChatRecord.get(message.getFrom()).add("0" + body);
                         }else{
                             ArrayList<String> newRecord = new ArrayList<>();
-                            newRecord.add("1" + content1);
-                            Content.privateChatRecord.put(fromName1, newRecord);
+                            newRecord.add("1" + body);
+                            Content.privateChatRecord.put(message.getFrom(), newRecord);
                         }
                         Platform.runLater(() ->{
                             //TODO 在此处调用PrivateController中的函数，更新消息
-                            if(Content.privateChatWindows.containsKey(fromName1)){
-                                Content.privateChatWindows.get(fromName1).addPrivate(fromName1, message.getFrom(), message.getTo(), message.getTime(), content1);
+                            if(Content.privateChatWindows.containsKey(message.getFrom())){
+                                System.out.println("addPrivate");
+                                Content.privateChatWindows.get(message.getFrom()).
+                                        addPrivate(message.getFrom(), message.getTo(), message.getTime(), body);
                             }
                         });
                         break;
@@ -104,6 +102,7 @@ public class ClientReceiveThread implements Runnable {
     }
     private void parseUserList(String body){
         String[] data=body.split(";");
+        Content.userList.clear();
         for (int i = 0; i < data.length; i++) {
             String[] user=data[i].split(":");
             if(user.length<2)

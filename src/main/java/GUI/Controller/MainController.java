@@ -1,6 +1,9 @@
 package GUI.Controller;
 
 import GUI.Model.Content;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -44,55 +47,20 @@ public class MainController {
 
     @FXML
     public void initialize(){
-//        //receive broadcast msg
-//        try{
-//        }catch(IOException e){
-//            e.printStackTrace();
-//        }
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run(){
-//                while(true){
-//                    receiveBrMsg();
-//                }
-//            }
-//        }).start();
-//
-//        //receive private msg
-//        try{
-//            servrerSocket = new ServerSocket(8090);
-//        }catch(IOException e){
-//            e.printStackTrace();
-//        }
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run(){
-//                while(true){
-//                    try{
-//                        Socket socket = servrerSocket.accept();
-//                        receivePrMsg(socket);
-//                    }catch(IOException e){
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        }).start();
-//
-//        // UI update is run on the Application thread
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while (true) {
-//                    try {
-//                        Thread.sleep(1000);
-//                    } catch (InterruptedException ex) {
-//                    }
-//                    refreshUserList();
-//                    refreshTextList();
-//
-//                }
-//            }
-//        }).start();
+        // UI update is run on the Application thread
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                    }
+                    updateUserList();
+
+                }
+            }
+        }).start();
 //
 //        //userList 监听是否打开私聊窗口
         userList.setOnMouseClicked((event) -> {
@@ -121,59 +89,12 @@ public class MainController {
 
     //刷新用户名单
     public void refreshUserList() {
-//        Platform.runLater(() -> {
-//            ObservableList<String> strList = FXCollections.observableArrayList(Content.getUsers());
-//            userList.setItems(strList);
-//        });
+        Platform.runLater(() -> {
+            ObservableList<String> strList = FXCollections.observableArrayList(Content.userList.keySet());
+            userList.setItems(strList);
+        });
     }
 
-
-    //刷新公聊信息
-//    public void refreshTextList() {
-//        Platform.runLater(() -> {
-//            ObservableList<String> strList = FXCollections.observableArrayList(Content.getMsg());
-//            msgList.setItems(strList);
-//        });
-//    }
-
-
-    //接受公聊信息
-//    public void receiveBrMsg(){
-//    }
-
-
-    //接受私聊信息
-//    public void receivePrMsg(Socket socket){
-//        InputStream is = null;
-//        InputStreamReader isr = null;
-//        BufferedReader bf = null;
-//        try{
-//            is  = socket.getInputStream();
-//            isr = new InputStreamReader(is,"UTF-8");
-//            bf = new BufferedReader(isr);
-//            String msg = bf.readLine();
-//            socket.close();
-//            String privateUser = msg.substring(0, msg.indexOf(":"));
-//            int symbol = 0;
-//            for(Iterator<PrivateChatUser> it = Content.privateChatUserList.iterator();it.hasNext();){
-//                PrivateChatUser privateChatUser = it.next();
-//                if(privateChatUser.userID.equals(privateUser)){
-//                    privateChatUser.msg.add(msg);
-//                    symbol = 1;
-//                    break;
-//                }
-//            }
-//            if(symbol == 0){
-//                PrivateChatUser newPrivateChatUser = new PrivateChatUser();
-//                newPrivateChatUser.userID = privateUser;
-//                newPrivateChatUser.msg.add(msg);
-//                Content.privateChatUserList.add(newPrivateChatUser);
-//            }
-//
-//        }catch(IOException e){
-//            e.printStackTrace();
-//        }
-//  }
 
 
     @FXML
@@ -190,7 +111,7 @@ public class MainController {
         textArea.clear();
     }
 
-    public void addGroupMsg(String fromName,int from, int to, Date date, String body){
+    public void addGroupMsg(int from, int to, Date date, String body){
         HBox hbox=new HBox();
         hbox.setAlignment(Pos.CENTER_LEFT);
         hbox.setPadding(new Insets(5,0,5,10));
@@ -224,6 +145,7 @@ public class MainController {
 
     public void updateUserList(){
         Content.client.getUserList();
+        refreshUserList();
     }
 
 }
