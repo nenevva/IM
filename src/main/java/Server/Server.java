@@ -12,6 +12,7 @@ import java.util.Map;
 public class Server {
     private int port;
     public static Map<Integer,Socket> clientMap = new HashMap<>();
+    public static HashMap<Integer,String> nameList=null;
     public static List<Socket> socketList = new ArrayList<>();
     private ServerSocket serverSocket;
 

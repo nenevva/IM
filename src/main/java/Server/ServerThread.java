@@ -1,11 +1,8 @@
 package Server;
 
-import DataBase.Message;
-import DataBase.MessageType;
-import DataBase.User;
+import DataBase.*;
 import com.google.gson.Gson;
 
-import java.awt.image.DataBuffer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,20 +33,22 @@ public class ServerThread implements Runnable {
         conn = DataBase.JDBC.getConnection();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(socket.getOutputStream());;
+            writer = new PrintWriter(socket.getOutputStream());
+            //TODO 文件传输
             while (true) {
                 String str = reader.readLine();//读取客户端输入的内容
+                if(str==null){
+                    logout(id);
+                    break;
+                }
                 Message message = gson.fromJson(str, Message.class);
                 String body="";
                 if(message!=null)
                     body = message.getBody();
                 else{
-                    continue;
                 }
                 System.out.println("receive:  "+str);
                 String[] data;
-
-                //TODO 用户在登录系统成功之前不能发送其它类型的信息
 
                 switch (message.getType()) {
                     case LOGIN:
@@ -82,12 +81,22 @@ public class ServerThread implements Runnable {
                     case USER_LIST:
                         sendUserList(message.getFrom());
                         break;
+                    case USER_NAME_LIST:
+                        sendUserNameList(message.getFrom());
+                        break;
+                    case GROUP_MSG_LOG:
+                        sendGroupLog(Integer.parseInt(body));
+                        break;
+                    case PRIVATE_MSG_LOG:
+                        sendPrivateLog(Integer.parseInt(body.split(";")[0]), Integer.parseInt(body.split(";")[1]));
+                        break;
                 }
             }
-        } catch (SocketException e) {
+        }
+        catch (SocketException e) {
             //Socket断开，用户离线
             logout(id);
-            Server.clientMap.remove(id);
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (SQLException e) {
@@ -127,14 +136,21 @@ public class ServerThread implements Runnable {
         id=DataBase.User.getNewID();
         User usr = new User(id, password, username);
         DataBase.User.userCreate(usr);
+        Server.clientMap.put(id, socket);
         send(writer,MessageType.SUCCESS,0,id,"register success");
     }
 
     //向用户所在的群聊通知该用户下线
     private void logout(int from) {
         //遍历from所在的群聊列表，并sendGroup
-        sendGroup(0, 0, "用户" + from + "已下线");
-        System.out.println("用户" + from + "已下线");
+        try {
+            Server.nameList= User.getAllName();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        sendGroup(0, 0, "用户"+Server.nameList.get(from) + "已下线");
+        System.out.println("用户"+Server.nameList.get(from) + "已下线");
+        Server.clientMap.remove(id);
     }
 
     //to为群聊id
@@ -171,15 +187,15 @@ public class ServerThread implements Runnable {
     //返回所有的在线用户
     private void sendUserList(int from){
         String body="";
-        ArrayList<String> nameList=null;
+        Server.nameList=null;
         try {
-            nameList= User.getAllName();
+            Server.nameList= User.getAllName();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
             if(entry.getKey()!=from) {
-                String name=nameList.get(nameList.indexOf(String.valueOf(entry.getKey()))+1);
+                String name=Server.nameList.get(entry.getKey());
                 body+=entry.getKey()+":"+name+";";
             }
         }
@@ -188,17 +204,27 @@ public class ServerThread implements Runnable {
 
     private void sendUserNameList(int from){
         String body="";
-        ArrayList<String> nameList=null;
+        Server.nameList=null;
         try {
-            nameList= User.getAllName();
+            Server.nameList= User.getAllName();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println(nameList);
-        for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
-            String name=nameList.get(nameList.indexOf(String.valueOf(entry.getKey()))+1);
-            body+=entry.getKey()+":"+name+";";
+        for(Map.Entry<Integer,String > entry:Server.nameList.entrySet()) {
+                String name= entry.getValue();
+                body+=entry.getKey()+":"+name+";";
         }
+        System.out.println(Server.nameList);
         send(writer, MessageType.USER_NAME_LIST, 0, from, body);
+    }
+
+    private void sendGroupLog(int groupID){
+        ArrayList<ChatLog> chatLogs=DataBase.ChatContent.getGroupChatLog(groupID);
+        send(writer,MessageType.GROUP_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
+    }
+
+    private void sendPrivateLog(int id1,int id2){
+        ArrayList<ChatLog> chatLogs=DataBase.ChatContent.getPrivateChatLog(id1,id2);
+        send(writer,MessageType.PRIVATE_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
     }
 }

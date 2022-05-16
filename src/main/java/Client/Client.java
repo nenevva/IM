@@ -88,6 +88,8 @@ public class Client {
         sendMsg(MessageType.USER_LIST,0,"");
     }
 
+    public void getUserNameList(){sendMsg(MessageType.USER_NAME_LIST,0,"");}
+
     public void getGroupMsgLog(int groupID){
         sendMsg(MessageType.GROUP_MSG_LOG,0, String.valueOf(groupID));
     }

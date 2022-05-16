@@ -3,6 +3,7 @@ package DataBase;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 public class User {
 
@@ -43,15 +44,14 @@ public class User {
         return -1;
     }
 
-    public static ArrayList<String> getAllName() throws SQLException{
+    public static HashMap<Integer,String> getAllName() throws SQLException{
         Connection conn = JDBC.getConnection();
         PreparedStatement ps = conn.prepareStatement("SELECT * FROM user");
         ResultSet rs = ps.executeQuery();
-        ArrayList<String> res=new ArrayList<>();
+        HashMap<Integer,String> res=new HashMap<>();
         while (rs.next())
         {
-            res.add(String.valueOf(rs.getInt("id")));
-            res.add(rs.getString("username"));
+            res.put(rs.getInt("id"),rs.getString("username"));
         }
         return res;
     }
