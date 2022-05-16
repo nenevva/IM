@@ -19,7 +19,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import javafx.event.EventHandler;
-import java.io.IOException;import java.net.*;
+import java.io.IOException;
 import java.util.Date;
 
 
@@ -56,12 +56,28 @@ public class MainController {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
                     }
-                    updateUserList();
+                    if(!Content.client.isClose())
+                        updateUserList();
 
                 }
             }
         }).start();
-//
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        if(!Content.client.isClose())
+                            updateIDRecord();
+                        Thread.sleep(100000);
+                    } catch (InterruptedException ex) {
+                    }
+
+                }
+            }
+        }).start();
+
 //        //userList 监听是否打开私聊窗口
         userList.setOnMouseClicked((event) -> {
 			String select = userList.getFocusModel().getFocusedItem();
@@ -112,9 +128,19 @@ public class MainController {
     }
 
     public void addGroupMsg(int from, int to, Date date, String body){
+        HBox hbox_name=new HBox();
+        hbox_name.setAlignment(Pos.CENTER_LEFT);
+        hbox_name.setPadding(new Insets(5,0,5,0));
+        TextFlow name=new TextFlow(new Text(Content.idNameRecord.get(from)));
+        name.setStyle(
+                "-fx-color:rgb(239,240,255);"
+        );
+        name.setPadding(new Insets(5,10,5,10));
+        hbox_name.getChildren().add(name);
+
         HBox hbox=new HBox();
         hbox.setAlignment(Pos.CENTER_LEFT);
-        hbox.setPadding(new Insets(5,0,5,10));
+        hbox.setPadding(new Insets(5,20,5,20));
         Text text=new Text(body);
         TextFlow textFlow=new TextFlow(text);
         textFlow.setStyle(
@@ -124,28 +150,47 @@ public class MainController {
         );
         textFlow.setPadding(new Insets(5,10,5,10));
         hbox.getChildren().add(textFlow);
+
+        main_info_vb.getChildren().add(hbox_name);
         main_info_vb.getChildren().add(hbox);
     }
 
+    //TODO 放头像
     public void addGroupMsgSelf(int to, Date date, String body){
+        HBox hbox_name=new HBox();
+        hbox_name.setAlignment(Pos.CENTER_RIGHT);
+        hbox_name.setPadding(new Insets(5,0,5,10));
+        TextFlow name=new TextFlow(new Text(Content.userName));
+        name.setStyle(
+                "-fx-color:rgb(239,240,255);"
+        );
+        name.setPadding(new Insets(5,10,5,10));
+        hbox_name.getChildren().add(name);
+
         HBox hbox=new HBox();
         hbox.setAlignment(Pos.CENTER_RIGHT);
-        hbox.setPadding(new Insets(5,0,5,10));
+        hbox.setPadding(new Insets(5,20,5,10));
         Text text=new Text(body);
         TextFlow textFlow=new TextFlow(text);
         textFlow.setStyle(
                 "-fx-color:rgb(239,240,255);"
-                        + "-fx-background-color:rgb(15,125,242);"
+                        + "-fx-background-color:rgb(173,209,248);"
                         +"-fx-background-radius: 20px"
         );
         textFlow.setPadding(new Insets(5,10,5,10));
         hbox.getChildren().add(textFlow);
+
+        main_info_vb.getChildren().add(hbox_name);
         main_info_vb.getChildren().add(hbox);
     }
 
     public void updateUserList(){
         Content.client.getUserList();
         refreshUserList();
+    }
+
+    public void updateIDRecord(){
+        Content.client.getUserNameList();
     }
 
 }

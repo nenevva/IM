@@ -109,13 +109,17 @@ public class ClientReceiveThread implements Runnable {
                 break;
             Content.userList.put(user[1], Integer.valueOf(user[0]));
         }
-        System.out.println(Content.userList);
     }
 
     private void parseUserNameList(String body){
         String[] data=body.split(";");
+        Content.idNameRecord.clear();
         for (int i = 0; i < data.length; i++) {
-            //System.out.println(data[i].split(":")[0]+"   "+data[i].split(":")[1]);
+            String[] user=data[i].split(":");
+            if(user.length<2)
+                break;
+            Content.idNameRecord.put( Integer.valueOf(user[0]),user[1]);
         }
+        System.out.println(Content.idNameRecord);
     }
 }

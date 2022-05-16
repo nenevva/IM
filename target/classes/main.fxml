@@ -52,7 +52,7 @@
                         <VBox fx:id="main_info_vb" prefHeight="350.0" prefWidth="400.0" />
                      </content>
                   </ScrollPane>
-                  <!--ListView fx:id="msgList" prefHeight="371.0" prefWidth="422.0" /-->
+<!--                  <ListView fx:id="msgList" prefHeight="371.0" prefWidth="422.0" />-->
                   <HBox prefHeight="25.0" prefWidth="329.0">
                      <children>
                         <Label prefHeight="31.0" prefWidth="247.0" />

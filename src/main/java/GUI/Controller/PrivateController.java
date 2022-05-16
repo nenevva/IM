@@ -120,7 +120,7 @@ public class PrivateController {
         TextFlow textFlow=new TextFlow(text);
         textFlow.setStyle(
                 "-fx-color:rgb(239,240,255);"
-                        + "-fx-background-color:rgb(15,125,242);"
+                        + "-fx-background-color:rgb(173,209,248);"
                         +"-fx-background-radius: 20px"
         );
         textFlow.setPadding(new Insets(5,10,5,10));

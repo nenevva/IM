@@ -48,7 +48,11 @@ public class LoginController{
 
     @FXML
     public void signIn(){
-        //ToDo send sign in msg to server
+        Content.client=new Client("localhost",1234);
+        String userName=userid.getText();
+        String password=passwd.getText();
+        Content.userName=userName;
+        Content.client.register(userName,password);
     }
 
     public void changeMain(){
@@ -62,6 +66,7 @@ public class LoginController{
             primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>(){
                 @Override
                 public void handle(WindowEvent e){
+                    System.out.println("退出登录");
                     Content.client.closeConnect();
                     changeLogin();
                 }

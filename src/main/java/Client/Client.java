@@ -52,6 +52,11 @@ public class Client {
                 e.printStackTrace();
             }
         }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getUserName() {
@@ -90,6 +95,8 @@ public class Client {
         sendMsg(MessageType.USER_LIST,0,"");
     }
 
+    public void getUserNameList(){sendMsg(MessageType.USER_NAME_LIST,0,"");}
+
     public void getGroupMsgLog(int groupID){
         sendMsg(MessageType.GROUP_MSG_LOG,0, String.valueOf(groupID));
     }
@@ -97,4 +104,9 @@ public class Client {
     public void getPrivateMsgLog(int id){
         sendMsg(MessageType.PRIVATE_MSG_LOG,0,""+this.id+";"+id);
     }
+
+    public boolean isClose(){
+        return socket.isClosed();
+    }
+
 }
