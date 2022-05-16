@@ -8,7 +8,6 @@ public class Message {
     private int to;
     private Date time;
     private String body;
-
     public Message(MessageType type, int from, int to, Date time, String body) {
         this.type = type;
         this.from = from;

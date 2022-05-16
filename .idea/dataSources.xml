@@ -8,11 +8,11 @@
       <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="@101.43.157.247" uuid="e087ddcb-37f6-46a9-a892-c7258e4fbe51">
+    <data-source source="LOCAL" name="@nene.ink" uuid="e087ddcb-37f6-46a9-a892-c7258e4fbe51">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://101.43.157.247:3306</jdbc-url>
+      <jdbc-url>jdbc:mysql://nene.ink:3306</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

@@ -76,16 +76,14 @@ public class ChatContent {
                 ));
             }
             //需要查找两次并对结果进行排序
-            if(chatLogs!=null){
-                chatLogs.sort(
-                        new Comparator<ChatLog>() {
-                            @Override
-                            public int compare(ChatLog o1, ChatLog o2) {
-                                return (int) (o2.getDate().getTime()-o1.getDate().getTime());
-                            }
+            chatLogs.sort(
+                    new Comparator<ChatLog>() {
+                        @Override
+                        public int compare(ChatLog o1, ChatLog o2) {
+                            return (int) (o2.getDate().getTime()-o1.getDate().getTime());
                         }
-                );
-            }
+                    }
+            );
             return chatLogs;
         }catch(SQLException e) {
             e.printStackTrace();
