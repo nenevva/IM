@@ -4,12 +4,10 @@ import DataBase.Message;
 import DataBase.MessageType;
 import com.google.gson.Gson;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.util.Date;
+import java.util.HashMap;
 
 public class Client {
     private String hostName;
@@ -20,6 +18,14 @@ public class Client {
     private PrintWriter writer;
     private BufferedReader reader;
     private Gson gson = new Gson();
+    public static HashMap<String,File> upLoadFileMap =new HashMap<>();
+    public static File fileReceive;
+    public static long fileLength;
+    public static int receivedParts;
+    public static int fileParts;
+    public static FileOutputStream saveFileOutput;
+
+    final int PART_BYTE=4096-2-4;
 
     public Client(String hostName, int port) {
 
@@ -96,5 +102,27 @@ public class Client {
 
     public void getPrivateMsgLog(int id){
         sendMsg(MessageType.PRIVATE_MSG_LOG,0,""+this.id+";"+id);
+    }
+
+    public void sendFilePrivate(String filename, int to){
+        File file=new File(filename);
+        upLoadFileMap.put(file.getName(),file);
+        sendMsg(MessageType.FILE_INFO,to,"0;"+file.length()+";"+file.getName());
+    }
+
+    public void receiveFilePrivate(String filename,Long fileLength,int from){
+        String path="fileReceive/";
+        new File(path).mkdirs();
+        this.fileLength=fileLength;
+        receivedParts=0;
+
+        fileParts=(int) (fileLength/PART_BYTE+1);
+        fileReceive =new File(path+filename);
+        try {
+            saveFileOutput=new FileOutputStream(fileReceive);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        sendMsg(MessageType.RECEIVE_FILE,from,"0;"+filename);
     }
 }

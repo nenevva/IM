@@ -3,13 +3,13 @@ package Client;
 import DataBase.ChatLog;
 import DataBase.ChatLogList;
 import DataBase.Message;
+import DataBase.MessageType;
+import Server.Server;
 import com.google.gson.Gson;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,8 @@ public class ClientReceiveThread implements Runnable {
     private Client client;
     public Socket socket;
     private Gson gson = new Gson();
-
+    private DataOutputStream output;
+    final int PART_BYTE=4096-2-4;
     public ClientReceiveThread(Client client, Socket socket) {
         this.client = client;
         this.socket = socket;
@@ -29,9 +30,16 @@ public class ClientReceiveThread implements Runnable {
     public void run() {
 
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            output=new DataOutputStream(socket.getOutputStream());
+            DataInputStream input= new DataInputStream(socket.getInputStream());
+            byte[] buffer=new byte[4096];
             while (true) {
-                String str = reader.readLine();
+                int length=input.read(buffer,0,4096);
+                if(buffer[0]!=123){
+                    handle(buffer);
+                    continue;
+                }
+                String str=new String(buffer,0,length, StandardCharsets.UTF_8);
                 Message message = gson.fromJson(str, Message.class);
                 String body = message.getBody();
                 SimpleDateFormat dateFormat = new SimpleDateFormat ("yyyy-MM-dd hh:mm:ss");
@@ -62,12 +70,49 @@ public class ClientReceiveThread implements Runnable {
                     case PRIVATE_MSG_LOG:
                         parsePrivateMsgLog(body);
                         break;
+                    case UPLOAD_FILE:
+                        uploadFile(body);
+                        break;
+                    case UPLOAD_FILE_SUCCESS:
+                        uploadFileSuccess(body);
+                        break;
+                    case FILE_INFO:
+                        receiveFileInfo(message.getFrom(),body);
+                        break;
+                    case RECEIVE_FILE:
+
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private void handle(byte[] data){
+        if(data[0]==1){
+            if(data[1]==1){
+                int part=(data[2]&0xff)<<24|(data[3]&0xff)<<16|(data[4]&0xff)<<8|(data[5]&0xff);
+                try {
+
+
+                    if(Client.receivedParts==Client.fileParts-1){
+                        Client.saveFileOutput.write(data,6, (int) (Client.fileLength-PART_BYTE*Client.receivedParts));
+                        Client.saveFileOutput.flush();
+                        Client.saveFileOutput.close();
+                        Client.saveFileOutput=null;
+                    }
+                    else{
+                        Client.saveFileOutput.write(data,6,PART_BYTE);
+                        Client.saveFileOutput.flush();
+                        Client.receivedParts++;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     private void parseUserList(String body){
         String[] data=body.split(";");
@@ -95,4 +140,66 @@ public class ClientReceiveThread implements Runnable {
         ArrayList<ChatLog> chatLogs=gson.fromJson(body, ChatLogList.class).getChatLogs();
         System.out.println(chatLogs);
     }
+
+    private void uploadFile(String body){
+        System.out.println(Client.upLoadFileMap);
+        File file=Client.upLoadFileMap.get(body);
+        if(file!=null){
+            System.out.println("尝试发送"+file.getName()+"给服务器");
+            byte[] data=new byte[4096];
+
+            int partNum= (int) (file.length()/PART_BYTE+1);
+            try {
+                BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
+                byte[] fileBuffer=new byte[PART_BYTE];
+                int part_i=0;
+                while(bin.read(fileBuffer)>0){
+                    part_i++;
+                    data[0]=1;
+                    data[1]=1;
+                    System.arraycopy(intTobyte(part_i),0,data,2,4);
+                    System.arraycopy(fileBuffer,0,data,6,PART_BYTE);
+                    output.write(data);
+                }
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+
+
+        }
+    }
+
+    private void uploadFileSuccess(String body){
+        System.out.println("文件"+body+"上传成功");
+        Client.upLoadFileMap.remove(body);
+    }
+
+    private void receiveFileInfo(int from,String body){
+        boolean isGroup= Boolean.parseBoolean(body.substring(0,body.indexOf(";")));
+        body=body.substring(body.indexOf(";")+1);
+        long fileLength= Long.parseLong(body.substring(0,body.indexOf(";")));
+        String filename=body.substring(body.indexOf(";")+1);
+        if(isGroup){
+
+        }
+        else {
+            //TODO 在聊天界面显示相应提示
+            System.out.println("" + from + "尝试发送文件" + filename + ",文件字节" + fileLength);
+        }
+    }
+
+    private void receiveFile(int from,String body){
+
+    }
+
+    //int 转化为字节数组
+    public static byte[] intTobyte(int num)
+    {
+        return new byte[] {(byte)((num>>24)&0xff),(byte)((num>>16)&0xff),(byte)((num>>8)&0xff),(byte)(num&0xff)};
+    }
+
 }

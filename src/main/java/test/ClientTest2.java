@@ -15,7 +15,7 @@ public class ClientTest2 {
         Scanner in=new Scanner(System.in);
         while(!(input=in.nextLine()).isEmpty()) {
             client.sendGroupMsg(1,input);
-            client.sendPrivateMsg(1,input);
+            client.receiveFilePrivate("test.png", 11859L,3);
         }
     }
 }

@@ -2,7 +2,6 @@ package test;
 
 
 import Client.Client;
-import DataBase.MessageType;
 
 import java.util.Scanner;
 
@@ -15,6 +14,7 @@ public class ClientTest1 {
         Scanner in=new Scanner(System.in);
         while(!(input=in.nextLine()).isEmpty()) {
             client.sendPrivateMsg(1,input);
+            client.sendFilePrivate("D:\\javaee-workspace\\IM\\test.png",2);
         }
     }
 }
