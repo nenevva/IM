@@ -13,8 +13,7 @@ public class ClientTest1 {
         String input;
         Scanner in=new Scanner(System.in);
         while(!(input=in.nextLine()).isEmpty()) {
-            client.sendPrivateMsg(1,input);
-            client.sendFilePrivate("D:\\javaee-workspace\\IM\\test.png",2);
+            client.startVideoChat(2);
         }
     }
 }

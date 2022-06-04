@@ -3,30 +3,28 @@ package Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Server {
+public class ServerVideo implements Runnable{
     private int port;
-    public static Map<Integer,Socket> clientMap = new HashMap<>();
-    public static HashMap<Integer,String> nameList=null;
-    public static List<Socket> socketList = new ArrayList<>();
     private ServerSocket serverSocket;
+    public static Map<Integer,Socket> videoClientMap = new HashMap<>();
 
-    public Server(int port) throws SQLException, ClassNotFoundException {
-
-        new DataBase.JDBC();
+    public ServerVideo(int port) {
         this.port = port;
+    }
+
+    @Override
+    public void run() {
         try {
+            System.out.println("监听视频传输");
             serverSocket = new ServerSocket(port);
-            new Thread(new ServerVideo(1235)).start();
             while(true) {
                 Socket socket = serverSocket.accept();
-                socketList.add(socket);
-                new Thread(new ServerThread(socket)).start();
+                new Thread(new ServerVideoThread(socket)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();

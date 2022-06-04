@@ -3,9 +3,11 @@ package Client;
 import DataBase.Message;
 import DataBase.MessageType;
 import com.google.gson.Gson;
+import mFile.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -24,8 +26,11 @@ public class Client {
     public static int receivedParts;
     public static int fileParts;
     public static FileOutputStream saveFileOutput;
-
+    public static int currentDownloadFileNum=0;
+    private HashMap<Integer,FileSaver> fileSaverMap=new HashMap<>();
     final int PART_BYTE=4096-2-4;
+    public static int videoChatID;
+    public static Boolean isVideo=false;
 
     public Client(String hostName, int port) {
 
@@ -35,14 +40,20 @@ public class Client {
             socket = new Socket(hostName,port);
             writer = new PrintWriter(socket.getOutputStream());
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            new Thread(new ClientReceiveThread(this,socket)).start();
+            new Thread(new ClientReceiveThread(hostName, this,socket)).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void sendMsg(MessageType type,int to,String s){
-        writer.println(gson.toJson(new Message(type,id,to,new Date(),s)));
+        System.out.println("send "+s);
+        String str=gson.toJson(new Message(type,id,to,new Date(),s));
+        str=str+"\n";
+        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
+            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+        }
+        writer.print(str);
         writer.flush();
     }
     public void closeConnect() {
@@ -111,18 +122,17 @@ public class Client {
     }
 
     public void receiveFilePrivate(String filename,Long fileLength,int from){
-        String path="fileReceive/";
-        new File(path).mkdirs();
-        this.fileLength=fileLength;
-        receivedParts=0;
 
-        fileParts=(int) (fileLength/PART_BYTE+1);
-        fileReceive =new File(path+filename);
-        try {
-            saveFileOutput=new FileOutputStream(fileReceive);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        sendMsg(MessageType.RECEIVE_FILE,from,"0;"+filename);
+    }
+
+    public void startVideoChat(int to){
+        sendMsg(MessageType.VIDEO_CHAT,to,"");
+        videoChatID=to;
+    }
+
+    public void sendVideoChatReply(int to,String reply){
+
+        videoChatID=to;
+        sendMsg(MessageType.VIDEO_CAHT_REPLY,to,reply);
     }
 }

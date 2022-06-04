@@ -18,10 +18,12 @@ public class ClientReceiveThread implements Runnable {
 
     private Client client;
     public Socket socket;
+    private String hostName;
     private Gson gson = new Gson();
     private DataOutputStream output;
     final int PART_BYTE=4096-2-4;
-    public ClientReceiveThread(Client client, Socket socket) {
+    public ClientReceiveThread(String hostName,Client client, Socket socket) {
+        this.hostName=hostName;
         this.client = client;
         this.socket = socket;
     }
@@ -79,8 +81,12 @@ public class ClientReceiveThread implements Runnable {
                     case FILE_INFO:
                         receiveFileInfo(message.getFrom(),body);
                         break;
-                    case RECEIVE_FILE:
-
+                    case VIDEO_CAHT_REPLY:
+                        handleVideoChatReply(message.getFrom(),body);
+                        break;
+                    case VIDEO_CHAT:
+                        handleVideoChat(message.getFrom(),body);
+                        break;
                 }
             }
         } catch (IOException e) {
@@ -143,11 +149,12 @@ public class ClientReceiveThread implements Runnable {
 
     private void uploadFile(String body){
         System.out.println(Client.upLoadFileMap);
-        File file=Client.upLoadFileMap.get(body);
+        int order= Integer.parseInt(body.substring(0,body.indexOf(";")));
+        String fileName=body.substring(body.indexOf(";")+1);
+        File file=Client.upLoadFileMap.get(fileName);
         if(file!=null){
             System.out.println("尝试发送"+file.getName()+"给服务器");
             byte[] data=new byte[4096];
-
             int partNum= (int) (file.length()/PART_BYTE+1);
             try {
                 BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
@@ -156,11 +163,13 @@ public class ClientReceiveThread implements Runnable {
                 while(bin.read(fileBuffer)>0){
                     part_i++;
                     data[0]=1;
-                    data[1]=1;
+                    data[1]= (byte) order;
                     System.arraycopy(intTobyte(part_i),0,data,2,4);
                     System.arraycopy(fileBuffer,0,data,6,PART_BYTE);
                     output.write(data);
                 }
+                bin.close();
+                Client.upLoadFileMap.remove(body);
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -187,13 +196,31 @@ public class ClientReceiveThread implements Runnable {
 
         }
         else {
-            //TODO 在聊天界面显示相应提示
+            //TODO 在聊天界面显示相应提示,将文件信息/发送方保存到合适的结构中
             System.out.println("" + from + "尝试发送文件" + filename + ",文件字节" + fileLength);
         }
     }
 
-    private void receiveFile(int from,String body){
+    private void handleVideoChatReply(int from,String body){
+        if(Client.videoChatID==from){
+            if(body.equals("ok")){
+                System.out.println("开始视频通话");
+                Client.isVideo=true;
+                new Thread(new VideoChatThread(hostName,1235,client.getId(),from)).start();
+            }
+            else if(body.equals("reject")){
+                System.out.println("对方拒绝了视频通话");
+            }
+        }
+        else{
+            String[] str=body.split(";");
+            System.out.println(str[1]);
+        }
+    }
 
+    private void handleVideoChat(int from,String body){
+        System.out.println("用户"+from+"向你发起了视频通话");
+        //TODO 前端
     }
 
     //int 转化为字节数组

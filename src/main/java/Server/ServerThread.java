@@ -1,7 +1,9 @@
 package Server;
 
+import Client.Client;
 import DataBase.*;
 import com.google.gson.Gson;
+import mFile.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
@@ -11,6 +13,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ServerThread implements Runnable {
@@ -19,17 +22,12 @@ public class ServerThread implements Runnable {
     public Socket socket;
     private int id = -1;
     private Gson gson = new Gson();
-    private PrintWriter writer;
     private DataOutputStream output;
+    private DataOutputStream videoChatOutput;
     private String filename;
-    private long fileLength;
-    private File saveFile;
-    private FileOutputStream saveFileOutput;
-    private int fileParts;
-    private int receivedParts;
-    private int fileTo;
-    private boolean isGroup;
     final int PART_BYTE=4096-2-4;
+    private int currentUploadFileNum=0;
+    private HashMap<Integer,FileSaver> fileSaverMap=new HashMap<>();
 
     public ServerThread(Socket socket) {
         this.socket = socket;
@@ -40,21 +38,21 @@ public class ServerThread implements Runnable {
 
         conn = DataBase.JDBC.getConnection();
         try {
-            //BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             output=new DataOutputStream(socket.getOutputStream());
-            //writer = new PrintWriter(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
             byte[] buffer=new byte[4096];
-
+            byte[] temp=new byte[80];
             //TODO 文件传输
             while (true) {
                 int length=input.read(buffer,0,4096);
-                //String str = reader.readLine();//读取客户端输入的内容
                 if(buffer[0]!=123){
                     handle(buffer);
                     continue;
                 }
                 String str=new String(buffer,0,length, StandardCharsets.UTF_8);
+                if(str.indexOf("\n")>-1){
+                    str=str.substring(0,str.indexOf("\n"));
+                }
                 if(str==null){
                     logout(id);
                     break;
@@ -81,8 +79,7 @@ public class ServerThread implements Runnable {
                         }
                         break;
                     case LOGOUT:
-                        logout(message.getFrom());
-                        break;
+                        throw new SocketException();
                     case REGISTER:
                         data = body.split(";");
                         if(body.length()<2) {
@@ -116,6 +113,12 @@ public class ServerThread implements Runnable {
                     case RECEIVE_FILE:
                         sendFile(message.getTo(),message.getFrom(),body);
                         break;
+                    case VIDEO_CHAT:
+                        sendVideoChatRequire(message.getTo());
+                        break;
+                    case VIDEO_CAHT_REPLY:
+                        sendVideoChatReply(message.getTo(),body);
+                        break;
                 }
             }
         }
@@ -132,47 +135,19 @@ public class ServerThread implements Runnable {
 
     }
 
-    private void handle(byte[] data){
-        if(data[0]==1){
-            if(data[1]==1){
-                int part=(data[2]&0xff)<<24|(data[3]&0xff)<<16|(data[4]&0xff)<<8|(data[5]&0xff);
-                try {
 
-
-                    if(receivedParts==fileParts-1){
-                        saveFileOutput.write(data,6, (int) (fileLength-PART_BYTE*receivedParts));
-                        saveFileOutput.flush();
-                        saveFileOutput.close();
-                        saveFileOutput=null;
-                        send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,saveFile.getName());
-                        if(isGroup){
-
-                        }
-                        else {
-                            Socket socketTo=Server.clientMap.get(fileTo);
-                            if(socketTo!=null){
-                                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
-                                send(output,MessageType.FILE_INFO,id,fileTo,"0;"+saveFile.length()+";"+saveFile.getName());
-                            }
-                        }
-                        //通知收发双方
-                    }
-                    else{
-                        saveFileOutput.write(data,6,PART_BYTE);
-                        saveFileOutput.flush();
-                        receivedParts++;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
     private void send(DataOutputStream output, MessageType type, int from, int to, String body) {
-        System.out.println("send :"+gson.toJson(new Message(type, from, to, new Date(), body)));
+        String str=gson.toJson(new Message(type, from, to, new Date(), body));
+        System.out.println("send :"+str);
+        str=str+"\n";
+        byte[] data=new byte[4096];
+        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
+            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+        }
+        System.arraycopy(str.getBytes(StandardCharsets.UTF_8),0,data,0,4096);
         try {
-            output.write((gson.toJson(new Message(type, from, to, new Date(), body))+"\n").getBytes(StandardCharsets.UTF_8));
+            output.write(data);
         }
         catch (SocketException e){
             e.printStackTrace();
@@ -231,7 +206,6 @@ public class ServerThread implements Runnable {
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
             if(entry.getKey()!=from) {
                 try {
-                    //PrintWriter writer=new PrintWriter(entry.getValue().getOutputStream());
                     DataOutputStream output=new DataOutputStream(entry.getValue().getOutputStream());
                     send(output,MessageType.GROUP_MSG,from,to,body);
                 } catch (IOException e) {
@@ -303,76 +277,127 @@ public class ServerThread implements Runnable {
     }
 
     private void saveFile(int to,String body){
-        fileTo=to;
-        isGroup= Boolean.parseBoolean(body.substring(0,body.indexOf(";")));
+        currentUploadFileNum++;
+        boolean isGroup= body.substring(0,body.indexOf(";")).equals("1");
         body=body.substring(body.indexOf(";")+1);
-        fileLength= Long.parseLong(body.substring(0,body.indexOf(";")));
-        filename=body.substring(body.indexOf(";")+1);
-        fileParts= (int) (fileLength/PART_BYTE+1);
-        receivedParts=0;
-        if(isGroup){
-            String path="file/group/"+to+"/"+id+"/";
-            File file=new File(path);
-            file.mkdirs();
-            saveFile=new File(path+"/"+filename);
+        long fileLength= Long.parseLong(body.substring(0,body.indexOf(";")));
+        String filename=body.substring(body.indexOf(";")+1);
+        FileSaver fileSaver=new FileSaver(id,to,fileLength,filename,isGroup);
+        fileSaver.startSave();
+        fileSaverMap.put(currentUploadFileNum,fileSaver);
+
+        send(output,MessageType.UPLOAD_FILE,0,id,""+currentUploadFileNum+";"+filename);
+    }
+
+    private void handle(byte[] data){
+        if(data[0]==1){
+            int index=data[1];
+            FileSaver fileSaver=fileSaverMap.get(index);
+            int part=(data[2]&0xff)<<24|(data[3]&0xff)<<16|(data[4]&0xff)<<8|(data[5]&0xff);
             try {
-                saveFileOutput=new FileOutputStream(saveFile);
-            } catch (FileNotFoundException e) {
+                fileSaver.write(part,data);
+                if(fileSaver.isFinish()){
+                    if(fileSaver.isGroup()){
+                        send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,fileSaver.getFileName());
+                        for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
+                            if(entry.getKey()!=id) {
+                                try {
+                                    DataOutputStream output=new DataOutputStream(entry.getValue().getOutputStream());
+                                    send(output,MessageType.FILE_INFO,id,fileSaver.getTo(),"1;"+fileSaver.getFileLength()+";"+fileSaver.getFileName());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,fileSaver.getFileName());
+                        Socket socketTo=Server.clientMap.get(fileSaver.getTo());
+                        if(socketTo!=null){
+                            DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                            send(output,MessageType.FILE_INFO,id,fileSaver.getTo(),"0;"+fileSaver.getFileLength()+";"+fileSaver.getFileName());
+                        }
+                    }
+                    fileSaverMap.remove(index);
+                    currentUploadFileNum--;
+                }
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-        else {
-            String path="file/private/"+id+"/"+to+"/";
-            File file=new File(path);
-            file.mkdirs();
-            saveFile=new File(path+"/"+filename);
-            try {
-                saveFileOutput=new FileOutputStream(saveFile);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            send(output,MessageType.UPLOAD_FILE,0,id,filename);
         }
     }
 
     private void sendFile(int from,int to,String body){
-        boolean isGroup= Boolean.parseBoolean(body.substring(0,body.indexOf(";")));
+        boolean isGroup= body.substring(0,body.indexOf(";")).equals("1");
         filename=body.substring(body.indexOf(";")+1);
+        int order= Integer.parseInt(filename.substring(0,filename.indexOf(";")));
+        filename=filename.substring(filename.indexOf(";")+1);
+        File file=null;
         if(isGroup){
-
+            int groupID=Integer.parseInt(filename.substring(0,filename.indexOf(";")));
+            filename=filename.substring(filename.indexOf(";")+1);
+            file=new File("file/group/"+groupID+"/"+from+"/"+filename);
         }
         else {
-            String path = "file/private/" + from + "/" + to + "/" + filename;
-            System.out.println(path);
-            File file = new File(path);
-            if (file != null) {
-                try {
-                    Server.nameList= User.getAllName();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+            file=new File("file/private/"+from+"/"+to+"/"+filename);
+        }
+        System.out.println(file.getName());
+        if(file!=null) {
+            System.out.println("尝试发送" + file.getName() + "给服务器");
+            byte[] data = new byte[4096];
+            int partNum = (int) (file.length() / PART_BYTE + 1);
+            try {
+                BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
+                byte[] fileBuffer = new byte[PART_BYTE];
+                int part_i = 0;
+                while (bin.read(fileBuffer) > 0) {
+                    part_i++;
+                    data[0] = 1;
+                    data[1] = (byte) order;
+                    System.arraycopy(intTobyte(part_i), 0, data, 2, 4);
+                    System.arraycopy(fileBuffer, 0, data, 6, PART_BYTE);
+                    output.write(data);
                 }
-                System.out.println("尝试发送" + file.getName()
-                        + "给" + Server.nameList.get(to));
-                byte[] data = new byte[4096];
-                int partNum = (int) (file.length() / PART_BYTE + 1);
-                try {
-                    BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
-                    byte[] fileBuffer = new byte[PART_BYTE];
-                    int part_i = 0;
-                    while (bin.read(fileBuffer) > 0) {
-                        part_i++;
-                        data[0] = 1;
-                        data[1] = 1;
-                        System.arraycopy(intTobyte(part_i), 0, data, 2, 4);
-                        System.arraycopy(fileBuffer, 0, data, 6, PART_BYTE);
-                        output.write(data);
-                    }
+                bin.close();
+                Client.upLoadFileMap.remove(body);
 
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendVideoChatRequire(int to){
+        Socket socketTo=Server.clientMap.get(to);
+        if(socketTo==null) {
+            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+        }
+        else{
+            try {
+                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                send(output, MessageType.VIDEO_CHAT, id, to, "");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendVideoChatReply(int to,String relpy){
+        Socket socketTo=Server.clientMap.get(to);
+        if(socketTo==null) {
+            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+        }
+        else{
+            try {
+                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                send(output, MessageType.VIDEO_CAHT_REPLY, id, to, relpy);
+                if(relpy.equals("ok")){
+                    send(this.output,MessageType.VIDEO_CAHT_REPLY,to,id,relpy);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
