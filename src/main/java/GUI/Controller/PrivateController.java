@@ -15,28 +15,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 
-//
-//import bupt.edu.models.Content;
-//import bupt.edu.models.PrivateChatUser;
-//import javafx.application.Platform;
-//import javafx.collections.FXCollections;
-//import javafx.collections.ObservableList;
-//import javafx.fxml.FXML;
-//import javafx.scene.control.Button;
-//import javafx.scene.control.ListView;
-//import javafx.scene.control.TextArea;
-//
-//import java.io.*;
-//import java.net.InetAddress;
-//import java.net.Socket;
-//import java.util.ArrayList;
-//import java.util.Iterator;
-//
 public class PrivateController {
     private String privateUser;
     private int privateUserID;
-//    private ArrayList<String> msg;
-//    private InetAddress ipaddress;
     @FXML
     private Button send;
     @FXML
@@ -88,12 +69,15 @@ public class PrivateController {
 
     @FXML
     public void sendFile(){
-       //TODO send file
+        //TODO 打开文件资源管理器，选择文件，传入绝对路径
+
+        Content.client.sendFilePrivate("D:\\javaee-workspace\\IM-client\\src\\test.png",privateUserID);
    }
 
     @FXML
     public void videoSound(){
-        //TODO video
+        //TODO
+        Content.client.startVideoChat(privateUserID);
     }
     
     public void addPrivate(int from, int to, Date date, String body){

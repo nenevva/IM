@@ -67,6 +67,7 @@ public class LoginController{
                 @Override
                 public void handle(WindowEvent e){
                     System.out.println("退出登录");
+                    Content.client.logout();
                     Content.client.closeConnect();
                     changeLogin();
                 }

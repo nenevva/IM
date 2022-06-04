@@ -25,7 +25,9 @@ import java.util.Date;
 
 public class MainController {
     public static MainController instance;
-    
+
+    private int groupID=1;
+
     @FXML
     private ListView<String> userList;
     @FXML
@@ -115,8 +117,9 @@ public class MainController {
 
     @FXML
     public void sendFile(){
-        //TODO send file by broadcast
+        //TODO 打开文件资源管理器，选择文件，传入绝对路径
 
+        Content.client.sendFileGroup("D:\\javaee-workspace\\IM-client\\src\\test.png",groupID);
     }
 
 

@@ -4,6 +4,8 @@ module com.example.demo {
     requires javafx.controls;
     requires java.sql;
     requires com.google.gson;
+    requires java.desktop;
+    requires webcam.capture;
 
 
     opens GUI to javafx.fxml;

@@ -4,12 +4,11 @@ import DataBase.Message;
 import DataBase.MessageType;
 import com.google.gson.Gson;
 import GUI.Model.Content;
+import mFile.FileSaver;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 public class Client {
@@ -30,15 +29,19 @@ public class Client {
             socket = new Socket(hostName,port);
             writer = new PrintWriter(socket.getOutputStream());
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            new Thread(new ClientReceiveThread(this,socket)).start();
+            new Thread(new ClientReceiveThread(hostName, this,socket)).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void sendMsg(MessageType type,int to,String s){
-        System.out.println("send:  "+gson.toJson(new Message(type,id,to,new Date(),s)));
-        writer.println(gson.toJson(new Message(type,id,to,new Date(),s)));
+        String str=gson.toJson(new Message(type,id,to,new Date(),s));
+        str=str+"\n";
+        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
+            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+        }
+        writer.print(str);
         writer.flush();
     }
     public void closeConnect() {
@@ -79,6 +82,8 @@ public class Client {
         sendMsg(MessageType.LOGIN,0,""+userName+";"+password);
     }
 
+    public void logout(){sendMsg(MessageType.LOGOUT,0,"");}
+
     public void register(String userName,String password){
         sendMsg(MessageType.REGISTER,0,""+userName+";"+password);
     }
@@ -109,4 +114,41 @@ public class Client {
         return socket.isClosed();
     }
 
+    public void sendFilePrivate(String filename, int to){
+        File file=new File(filename);
+        Content.upLoadFileMap.put(file.getName(),file);
+        sendMsg(MessageType.FILE_INFO,to,"0;"+file.length()+";"+file.getName());
+    }
+
+    public void sendFileGroup(String filename, int to){
+        File file=new File(filename);
+        Content.upLoadFileMap.put(file.getName(),file);
+        sendMsg(MessageType.FILE_INFO,to,"1;"+file.length()+";"+file.getName());
+    }
+
+    public void receiveFilePrivate(String filename,Long fileLength,int from){
+        //TODO
+        FileSaver fileSaver=Content.privateFileReceiveMap.get(from).get(filename);
+        fileSaver.startSave();
+        Content.currentDownloadFileMap.put(Content.currentDownloadFileMap.size()+1,fileSaver);
+        sendMsg(MessageType.RECEIVE_FILE,fileSaver.getFrom(),"0;"+Content.currentDownloadFileMap.size()+";"+filename);
+    }
+
+    public void receiveFileGroup(String filename,Long fileLength,int from,int groupID){
+        //TODO
+        FileSaver fileSaver=Content.groupFileReceiveMap.get(from).get(filename);
+        fileSaver.startSave();
+        Content.currentDownloadFileMap.put(Content.currentDownloadFileMap.size()+1,fileSaver);
+        sendMsg(MessageType.RECEIVE_FILE,fileSaver.getFrom(),"1;"+Content.currentDownloadFileMap.size()+";"+groupID+";"+filename);
+    }
+
+    public void startVideoChat(int to){
+        sendMsg(MessageType.VIDEO_CHAT,to,"");
+        Content.videoChatID=to;
+        System.out.println("向"+Content.idNameRecord.get(to)+"发起视频通话");
+    }
+
+    public void sendVideoChatReply(int to,String reply){
+        sendMsg(MessageType.VIDEO_CAHT_REPLY,to,reply);
+    }
 }
