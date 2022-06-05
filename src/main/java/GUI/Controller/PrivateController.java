@@ -1,10 +1,12 @@
 package GUI.Controller;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
 import GUI.Model.Content;
+import GUI.Model.StageManager;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 
 public class PrivateController {
     private String privateUser;
@@ -69,9 +72,12 @@ public class PrivateController {
 
     @FXML
     public void sendFile(){
-        //TODO 打开文件资源管理器，选择文件，传入绝对路径
-
-        Content.client.sendFilePrivate("D:\\javaee-workspace\\IM-client\\src\\test.png",privateUserID);
+        //打开文件资源管理器，选择文件，传入绝对路径
+        FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(StageManager.STAGE.get(privateUser));
+        String filename = file.getName();
+        addPrivateSelf(privateUserID, new Date(), filename);
+        Content.client.sendFilePrivate(file.getPath(), privateUserID);
    }
 
     @FXML
@@ -108,6 +114,25 @@ public class PrivateController {
                         +"-fx-background-radius: 20px"
         );
         textFlow.setPadding(new Insets(5,10,5,10));
+        hbox.getChildren().add(textFlow);
+        private_info_vb.getChildren().add(hbox);
+    }
+
+    public void addFile(int from, long fileLength, String filename){
+        HBox hbox=new HBox();
+        hbox.setAlignment(Pos.CENTER_LEFT);
+        hbox.setPadding(new Insets(5,0,5,10));
+        Text text=new Text(filename);
+        TextFlow textFlow=new TextFlow(text);
+        textFlow.setStyle(
+                "-fx-color:rgb(239,240,255);"
+                        + "-fx-background-color:rgb(255,255,255);"
+                        +"-fx-background-radius: 20px"
+        );
+        textFlow.setPadding(new Insets(5,10,5,10));
+        text.setOnMouseClicked((event)->{
+            Content.client.receiveFilePrivate(filename, fileLength, from);
+        });
         hbox.getChildren().add(textFlow);
         private_info_vb.getChildren().add(hbox);
     }

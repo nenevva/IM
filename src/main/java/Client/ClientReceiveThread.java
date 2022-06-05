@@ -7,6 +7,15 @@ import GUI.Controller.LoginController;
 import GUI.Controller.MainController;
 import GUI.Model.Content;
 import javafx.application.Platform;
+import javafx.beans.value.WeakChangeListener;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import mFile.FileSaver;
 
 import java.io.*;
@@ -15,6 +24,7 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 public class ClientReceiveThread implements Runnable {
@@ -201,7 +211,19 @@ public class ClientReceiveThread implements Runnable {
     private void uploadFileSuccess(String body){
         System.out.println("文件"+body+"上传成功");
         Content.upLoadFileMap.remove(body);
-        //TODO 前端显示发送完成
+        //前端显示发送完成
+        Platform.runLater(()->{
+            Stage alert = new Stage();
+            VBox vbox = new VBox();
+            Label label = new Label("文件"+ body+"上传成功");
+            vbox.setAlignment(Pos.CENTER);
+            vbox.getChildren().add(label);
+            Scene scene = new Scene(vbox);
+            alert.setScene(scene);
+            alert.setTitle("文件上传");
+            alert.show();
+        });
+
     }
 
     private void receiveFileInfo(int from,int to,String body){
@@ -210,25 +232,43 @@ public class ClientReceiveThread implements Runnable {
         long fileLength= Long.parseLong(body.substring(0,body.indexOf(";")));
         String filename=body.substring(body.indexOf(";")+1);
         if(isGroup){
-            //TODO 在聊天界面显示相应提示
+            //在聊天界面显示相应提示
+            Platform.runLater(()->{
+                mainController.addGroupFile(from, to, fileLength, filename);
+            });
             FileSaver fileSaver=new FileSaver(from,to,fileLength,filename,isGroup);
             if(Content.groupFileReceiveMap.get(from)==null)
                 Content.groupFileReceiveMap.put(from,new HashMap<String,FileSaver>());
             Content.groupFileReceiveMap.get(from).put(filename,fileSaver);
             System.out.println("" + from + "尝试发送文件(群聊)" + filename + ",文件字节" + fileLength);
-
             //此时默认下载文件
-            Content.client.receiveFileGroup(fileSaver.getFileName(),fileSaver.getFileLength(),fileSaver.getFrom(),fileSaver.getTo());
+            //Content.client.receiveFileGroup(fileSaver.getFileName(),fileSaver.getFileLength(),fileSaver.getFrom(),fileSaver.getTo());
         }
         else {
-            //TODO 在聊天界面显示相应提示
+            //在聊天界面显示相应提示
+            if(Content.privateChatRecord.containsKey(from)){
+                Content.privateChatRecord.get(from).add("0" + filename);
+            }else{
+                ArrayList<String> newRecord = new ArrayList<>();
+                newRecord.add("1" + filename);
+                Content.privateChatRecord.put(from, newRecord);
+            }
+            Platform.runLater(() ->{
+                if(Content.privateChatWindows.containsKey(from)){
+                    System.out.println("addPrivate");
+                    Content.privateChatWindows.get(from).
+                            addFile(from, fileLength, filename);
+                }
+            });
+
+            //
             FileSaver fileSaver=new FileSaver(from,Content.id,fileLength,filename,isGroup);
             if(Content.privateFileReceiveMap.get(from)==null)
                 Content.privateFileReceiveMap.put(from,new HashMap<String,FileSaver>());
             Content.privateFileReceiveMap.get(from).put(filename,fileSaver);
             System.out.println("" + from + "尝试发送文件" + filename + ",文件字节" + fileLength);
 
-            Content.client.receiveFilePrivate(fileSaver.getFileName(),fileSaver.getFileLength(),fileSaver.getFrom());
+            //Content.client.receiveFilePrivate(fileSaver.getFileName(),fileSaver.getFileLength(),fileSaver.getFrom());
         }
     }
 
@@ -242,7 +282,10 @@ public class ClientReceiveThread implements Runnable {
             }
             else if(body.equals("reject")){
                 System.out.println("对方拒绝了视频通话");
-                //TODO 聊天界面显示
+                //聊天界面显示
+                Platform.runLater(()->{
+                    Content.privateChatWindows.get(from).addPrivateSelf(from, new Date(), "对方拒绝了视频通话");
+                });            
             }
         }
         else{
@@ -253,8 +296,32 @@ public class ClientReceiveThread implements Runnable {
 
     private void handleVideoChat(int from,String body){
         System.out.println("用户"+Content.idNameRecord.get(from)+"向你发起了视频通话");
-        //TODO 聊天界面显示,能够选择接收或拒绝
-
+        //聊天界面显示,能够选择接收或拒绝
+        Platform.runLater(()->{
+            Stage alert = new Stage();
+            VBox vbox = new VBox();
+            Label label = new Label("用户"+Content.idNameRecord.get(from)+"向你发起了视频通话");
+            vbox.setAlignment(Pos.CENTER);
+            HBox hbox = new HBox();
+            Button accept = new Button("接受");
+            Button reject = new Button("拒绝");
+            accept.setOnMouseClicked((event) -> {
+                Content.client.sendVideoChatReply(from, "ok");
+                alert.close();
+            });
+            reject.setOnMouseClicked((event) -> {
+                Content.client.sendVideoChatReply(from, "reject");
+                alert.close();
+            });
+            hbox.getChildren().addAll(accept, reject);
+            vbox.getChildren().addAll(label, hbox);
+            
+            Scene scene = new Scene(vbox);
+            alert.setScene(scene);
+            alert.setTitle("视频请求");
+            alert.show();
+        });
+        
 
     }
 

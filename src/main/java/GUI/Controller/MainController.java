@@ -1,6 +1,7 @@
 package GUI.Controller;
 
 import GUI.Model.Content;
+import GUI.Model.StageManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,10 +16,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import javafx.event.EventHandler;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
@@ -90,11 +94,14 @@ public class MainController {
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
                 stage.setTitle(select);
+                StageManager.STAGE.put(select, stage);
                 stage.show();
                 stage.setOnCloseRequest(new EventHandler<WindowEvent>(){
                     @Override
                     public void handle(WindowEvent e){
-                        Content.privateChatWindows.remove(select);
+                        Integer selectID = Content.userList.get(select); 
+                        Content.privateChatWindows.remove(selectID);
+                        StageManager.STAGE.remove(select);
                     }
                 });
             }catch(IOException e){
@@ -117,9 +124,12 @@ public class MainController {
 
     @FXML
     public void sendFile(){
-        //TODO 打开文件资源管理器，选择文件，传入绝对路径
-
-        Content.client.sendFileGroup("D:\\javaee-workspace\\IM-client\\src\\test.png",groupID);
+        //打开文件资源管理器，选择文件，传入绝对路径
+        FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(StageManager.STAGE.get("Main"));
+        String filename = file.getName();
+        addGroupMsgSelf(1,new Date(), filename);
+        Content.client.sendFileGroup(file.getPath(), groupID);
     }
 
 
@@ -196,4 +206,34 @@ public class MainController {
         Content.client.getUserNameList();
     }
 
+    public void addGroupFile(int from, int to, long fileLength, String filename){
+        HBox hbox_name=new HBox();
+        hbox_name.setAlignment(Pos.CENTER_LEFT);
+        hbox_name.setPadding(new Insets(5,0,5,0));
+        TextFlow name=new TextFlow(new Text(Content.idNameRecord.get(from)));
+        name.setStyle(
+                "-fx-color:rgb(239,240,255);"
+        );
+        name.setPadding(new Insets(5,10,5,10));
+        hbox_name.getChildren().add(name);
+
+        HBox hbox=new HBox();
+        hbox.setAlignment(Pos.CENTER_LEFT);
+        hbox.setPadding(new Insets(5,20,5,20));
+        Text text=new Text(filename);
+        TextFlow textFlow=new TextFlow(text);
+        textFlow.setStyle(
+                "-fx-color:rgb(239,240,255);"
+                        + "-fx-background-color:rgb(255,255,255);"
+                        +"-fx-background-radius: 20px"
+        );
+        textFlow.setOnMouseClicked((event)->{
+            Content.client.receiveFileGroup(filename, fileLength, from, to);
+        });
+        textFlow.setPadding(new Insets(5,10,5,10));
+        hbox.getChildren().add(textFlow);
+
+        main_info_vb.getChildren().add(hbox_name);
+        main_info_vb.getChildren().add(hbox);
+    }
 }

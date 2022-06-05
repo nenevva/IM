@@ -63,17 +63,19 @@ public class LoginController{
             primaryStage.setScene(scene);
             primaryStage.setTitle("tomato-im");
             primaryStage.show();
+            StageManager.STAGE.get("Login").hide();
+            StageManager.STAGE.put("Main", primaryStage);
             primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>(){
                 @Override
                 public void handle(WindowEvent e){
                     System.out.println("退出登录");
                     Content.client.logout();
                     Content.client.closeConnect();
+                    StageManager.STAGE.remove("Main");
                     changeLogin();
                 }
             });
-            StageManager.STAGE.get("Login").hide();
-            StageManager.STAGE.put("Main", primaryStage);
+            
         } catch(Exception e) {
             e.printStackTrace();
         }
