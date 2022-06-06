@@ -38,7 +38,7 @@ public class LoginController{
 
     @FXML 
     public void onButtonclick() throws Exception{
-        Content.client=new Client("localhost",1234);
+        Content.client=new Client("36.148.188.222",1234);
         String userName=userid.getText();
         String password=passwd.getText();
         Content.userName=userName;
@@ -48,7 +48,7 @@ public class LoginController{
 
     @FXML
     public void signIn(){
-        Content.client=new Client("localhost",1234);
+        Content.client=new Client("36.148.188.222",1234);
         String userName=userid.getText();
         String password=passwd.getText();
         Content.userName=userName;

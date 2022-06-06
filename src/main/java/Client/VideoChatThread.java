@@ -1,9 +1,11 @@
 package Client;
 
 import GUI.Model.Content;
+import javafx.application.Platform;
+
+import javafx.scene.image.Image;
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamLockException;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -57,6 +59,11 @@ public class VideoChatThread implements Runnable{
                 file.mkdirs();
                 file=new File("img/"+from+"/"+to+"/"+count+++".jpg");
                 ImageIO.write(img,"jpg",file);
+                Image image = new Image("img/"+from+"/"+to+"/" + file.getName());
+                Platform.runLater(() -> {
+                    Content.videoController.updateImage(image);
+                });
+                
             }
         } catch (IOException e) {
             e.printStackTrace();

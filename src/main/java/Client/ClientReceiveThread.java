@@ -6,13 +6,18 @@ import com.google.gson.Gson;
 import GUI.Controller.LoginController;
 import GUI.Controller.MainController;
 import GUI.Model.Content;
+import GUI.Model.StageManager;
 import javafx.application.Platform;
 import javafx.beans.value.WeakChangeListener;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -26,6 +31,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+
+import javax.swing.plaf.metal.MetalBorders.PaletteBorder;
 
 public class ClientReceiveThread implements Runnable {
 
@@ -278,6 +285,18 @@ public class ClientReceiveThread implements Runnable {
                 System.out.println("开始视频通话");
                 //TODO 前端开启视频窗口
                 Content.isVideo=true;
+                Platform.runLater(()->{
+                    try {
+                        Stage stage = new Stage();
+                        VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("video.xml"));
+                        Scene scene = new Scene(root);
+                        stage.setScene(scene);
+                        stage.setTitle(from + "视频通话");
+                        stage.show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
                 new Thread(new VideoChatThread(hostName,1235,client.getId(),from)).start();
             }
             else if(body.equals("reject")){
