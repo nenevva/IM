@@ -3,7 +3,7 @@ package Server;
 import Client.Client;
 import DataBase.*;
 import com.google.gson.Gson;
-import mFile.FileSaver;
+import Util.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
@@ -60,7 +60,8 @@ public class ServerThread implements Runnable {
 
 
                 Message message = gson.fromJson(str, Message.class);
-                System.out.println("receive:  "+str);
+                if(message.getType()!=MessageType.USER_LIST)
+                    System.out.println("receive:  "+str);
                 String body="";
                 if(message!=null)
                     body = message.getBody();
@@ -139,7 +140,8 @@ public class ServerThread implements Runnable {
 
     private void send(DataOutputStream output, MessageType type, int from, int to, String body) {
         String str=gson.toJson(new Message(type, from, to, new Date(), body));
-        System.out.println("send :"+str);
+        if(type!=MessageType.USER_LIST)
+            System.out.println("send :"+str);
         str=str+"\n";
         byte[] data=new byte[4096];
         if(str.getBytes(StandardCharsets.UTF_8).length<4096){
@@ -406,4 +408,6 @@ public class ServerThread implements Runnable {
     public static byte[] intTobyte(int num) {
         return new byte[] {(byte)((num>>24)&0xff),(byte)((num>>16)&0xff),(byte)((num>>8)&0xff),(byte)(num&0xff)};
     }
+
+
 }

@@ -1,5 +1,6 @@
 package Client;
 
+
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamLockException;
 
@@ -7,7 +8,9 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
+
 
 public class VideoChatThread implements Runnable{
 
@@ -17,8 +20,9 @@ public class VideoChatThread implements Runnable{
     private int to;
     private Webcam webcam;
     private Boolean webcamLock=false;
+    BufferedImage debug_image;
 
-    public VideoChatThread(String hostname, int port,int from, int to) {
+    public VideoChatThread(String hostname, int port, int from, int to) {
         try {
             this.socket = new Socket(hostname,port);
         } catch (IOException e) {
@@ -38,9 +42,11 @@ public class VideoChatThread implements Runnable{
                 webcam.open();
             }
             catch (WebcamLockException e){
+                System.out.println("摄像头锁定");
+                debug_image=ImageIO.read(new File("video_chat_debug_help.jpg"));;
                 webcamLock=true;//在同一台主机上，不能同时打开两个webcam
             }
-            System.out.println("from"+from+";to"+to);
+
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
             output.writeInt(from);
@@ -51,26 +57,29 @@ public class VideoChatThread implements Runnable{
                 BufferedImage img=readImage(input);
                 if(img==null)
                     continue;
+                //TODO 显示在窗口中
                 File file=new File("img/"+from+"/"+to+"/");
                 file.mkdirs();
                 file=new File("img/"+from+"/"+to+"/"+count+++".jpg");
                 ImageIO.write(img,"jpg",file);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void writeImage(DataOutputStream output){
+
         ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
         BufferedImage image;
         try {
-        if(webcamLock){
-            image=ImageIO.read(new File("video_chat_debug_help.jpg"));
-        }
-        else{
-            image = webcam.getImage();
-        }
+            if(webcamLock){
+                image=debug_image;
+            }
+            else{
+                image = webcam.getImage();
+            }
 
             ImageIO.write(image,"jpg",byteArrayOutputStream);
             byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();

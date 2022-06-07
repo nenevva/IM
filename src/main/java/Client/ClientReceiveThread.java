@@ -207,6 +207,7 @@ public class ClientReceiveThread implements Runnable {
                 System.out.println("开始视频通话");
                 Client.isVideo=true;
                 new Thread(new VideoChatThread(hostName,1235,client.getId(),from)).start();
+                new Thread(new VoiceChatThread(hostName,1236,client.getId(),from)).start();
             }
             else if(body.equals("reject")){
                 System.out.println("对方拒绝了视频通话");

@@ -23,6 +23,7 @@ public class Server {
         try {
             serverSocket = new ServerSocket(port);
             new Thread(new ServerVideo(1235)).start();
+            new Thread(new ServerVoice(1236)).start();
             while(true) {
                 Socket socket = serverSocket.accept();
                 socketList.add(socket);
