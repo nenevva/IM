@@ -4,7 +4,7 @@ import DataBase.Message;
 import DataBase.MessageType;
 import com.google.gson.Gson;
 import GUI.Model.Content;
-import mFile.FileSaver;
+import Util.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
@@ -12,14 +12,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 public class Client {
-    private String hostName;
-    private int port;
+    private final String hostName;
+    private final int port;
     private String userName;
     private Integer id = -1;
     private Socket socket;
     private PrintWriter writer;
     private BufferedReader reader;
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     public Client(String hostName, int port) {
 
@@ -149,6 +149,8 @@ public class Client {
     }
 
     public void sendVideoChatReply(int to,String reply){
+
+        Content.videoChatID=to;
         sendMsg(MessageType.VIDEO_CAHT_REPLY,to,reply);
     }
 }

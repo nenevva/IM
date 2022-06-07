@@ -3,7 +3,7 @@ package GUI.Model;
 import Client.Client;
 import GUI.Controller.PrivateController;
 import GUI.Controller.VideoController;
-import mFile.FileSaver;
+import Util.FileSaver;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,4 +28,5 @@ public class Content {
     public static HashMap<Integer,HashMap<String, FileSaver>> groupFileReceiveMap =new HashMap<>();
     public static HashMap<Integer,FileSaver> currentDownloadFileMap=new HashMap<>();
     public static Boolean isVideo=false;
+    public static Boolean isVoice=false;
 }

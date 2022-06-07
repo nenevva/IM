@@ -1,4 +1,4 @@
-package mFile;
+package Util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,16 +6,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class FileSaver {
-    private int from;
-    private int to;
-    private long fileLength;
+    private final int from;
+    private final int to;
+    private final long fileLength;
     private String location;
-    private int parts;
+    private final int parts;
     private int current;
-    private String fileName;
+    private final String fileName;
     private FileOutputStream output;
-    private boolean isGroup;
+    private final boolean isGroup;
     final int PART_BYTE=4096-2-4;
+    private String absolutePath;
 
     public FileSaver(int from, int to, long fileLength, String fileName, boolean isGroup) {
         this.from = from;
@@ -25,17 +26,20 @@ public class FileSaver {
         this.isGroup = isGroup;
         current=0;
         parts= (int) (fileLength/PART_BYTE+1);
+
     }
 
     public void startSave(){
         if(isGroup){
-            location="file/group/";
+            location="file/group/"+to+"/"+from+"/";
         }
         else{
-            location="file/private/"+from+"/";
+            location="file/private/"+from+"/"+to+"/";
         }
         new File(location).mkdirs();
+
         location+=fileName;
+        absolutePath =new File(location).getAbsolutePath();
         try {
             output=new FileOutputStream(location);
         } catch (FileNotFoundException e) {
@@ -79,5 +83,13 @@ public class FileSaver {
 
     public long getFileLength() {
         return fileLength;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getAbsolutePath() {
+        return absolutePath;
     }
 }

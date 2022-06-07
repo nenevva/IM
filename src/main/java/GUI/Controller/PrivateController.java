@@ -7,16 +7,22 @@ import java.util.Iterator;
 
 import GUI.Model.Content;
 import GUI.Model.StageManager;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class PrivateController {
     private String privateUser;
@@ -31,6 +37,13 @@ public class PrivateController {
     private TextArea textArea;
     @FXML
     private VBox private_info_vb;
+
+    private static PrivateController instance;
+
+    public PrivateController() {
+        instance = this;
+    }
+
     @FXML
     public void initialize(){
 
@@ -54,6 +67,10 @@ public class PrivateController {
                 }
             }
         }
+    }
+
+    public static PrivateController getInstance(){
+        return instance;
     }
     //发送信息
     @FXML
@@ -136,4 +153,6 @@ public class PrivateController {
         hbox.getChildren().add(textFlow);
         private_info_vb.getChildren().add(hbox);
     }
+
+
 }

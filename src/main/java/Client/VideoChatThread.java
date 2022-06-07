@@ -11,15 +11,17 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import javafx.embed.swing.SwingFXUtils;
 
 public class VideoChatThread implements Runnable{
 
     public Socket socket;
     private DataOutputStream output;
-    private int from;
-    private int to;
+    private final int from;
+    private final int to;
     private Webcam webcam;
     private Boolean webcamLock=false;
+    BufferedImage debug_image;
 
     public VideoChatThread(String hostname, int port, int from, int to) {
         try {
@@ -41,25 +43,27 @@ public class VideoChatThread implements Runnable{
                 webcam.open();
             }
             catch (WebcamLockException e){
+                System.out.println("摄像头锁定");
+                debug_image=ImageIO.read(new File("video_chat_debug_help.jpg"));
                 webcamLock=true;//在同一台主机上，不能同时打开两个webcam
             }
-            System.out.println("from"+from+";to"+to);
+
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
             output.writeInt(from);
             output.writeInt(to);
             int count=0;
+
             while(Content.isVideo){
                 writeImage(output);
                 BufferedImage img=readImage(input);
                 if(img==null)
                     continue;
-                //TODO 显示在窗口中
                 File file=new File("img/"+from+"/"+to+"/");
                 file.mkdirs();
                 file=new File("img/"+from+"/"+to+"/"+count+++".jpg");
                 ImageIO.write(img,"jpg",file);
-                Image image = new Image("img/"+from+"/"+to+"/" + file.getName());
+                Image image = SwingFXUtils.toFXImage(img, null);
                 Platform.runLater(() -> {
                     Content.videoController.updateImage(image);
                 });
@@ -75,7 +79,7 @@ public class VideoChatThread implements Runnable{
         BufferedImage image;
         try {
         if(webcamLock){
-            image=ImageIO.read(new File("video_chat_debug_help.jpg"));
+            image=debug_image;
         }
         else{
             image = webcam.getImage();

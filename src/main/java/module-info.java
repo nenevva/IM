@@ -6,6 +6,7 @@ module com.example.demo {
     requires com.google.gson;
     requires java.desktop;
     requires webcam.capture;
+    requires javafx.swing;
 
 
     opens GUI to javafx.fxml;

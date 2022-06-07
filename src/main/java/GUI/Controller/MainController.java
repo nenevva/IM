@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import javafx.event.EventHandler;
+import Util.FileSaver;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import java.util.Date;
 public class MainController {
     public static MainController instance;
 
-    private int groupID=1;
+    private final int groupID=1;
 
     @FXML
     private ListView<String> userList;
@@ -228,7 +229,19 @@ public class MainController {
                         +"-fx-background-radius: 20px"
         );
         textFlow.setOnMouseClicked((event)->{
+            FileSaver fileSaver=Content.groupFileReceiveMap.get(from).get(filename);
+            if(fileSaver.isFinish()){
+                System.out.println(fileSaver.getLocation());
+                try {
+                    Runtime.getRuntime().exec("explorer.exe /select," + fileSaver.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //TODO
+            }
+            else{
             Content.client.receiveFileGroup(filename, fileLength, from, to);
+            }
         });
         textFlow.setPadding(new Insets(5,10,5,10));
         hbox.getChildren().add(textFlow);
@@ -236,4 +249,28 @@ public class MainController {
         main_info_vb.getChildren().add(hbox_name);
         main_info_vb.getChildren().add(hbox);
     }
+
+    public void showVideo(String name){
+        try {
+            Stage stage = new Stage();
+            VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("video.fxml"));
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle(name + "视频通话");
+            stage.show();
+            stage.setOnCloseRequest(new EventHandler<WindowEvent>(){
+                @Override
+                public void handle(WindowEvent e){
+                    System.out.println("关闭视频通话");
+                    Content.isVideo=false;
+                    Content.isVoice=false;
+                }
+            });
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

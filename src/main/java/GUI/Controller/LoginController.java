@@ -11,8 +11,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import java.io.FileInputStream;
 
 
 public class LoginController{
@@ -38,7 +42,7 @@ public class LoginController{
 
     @FXML 
     public void onButtonclick() throws Exception{
-        Content.client=new Client("36.148.188.222",1234);
+        Content.client=new Client("localhost",1234);
         String userName=userid.getText();
         String password=passwd.getText();
         Content.userName=userName;
@@ -48,7 +52,7 @@ public class LoginController{
 
     @FXML
     public void signIn(){
-        Content.client=new Client("36.148.188.222",1234);
+        Content.client=new Client("localhost",1234);
         String userName=userid.getText();
         String password=passwd.getText();
         Content.userName=userName;
@@ -87,5 +91,29 @@ public class LoginController{
         passwd.clear();
         StageManager.STAGE.get("Login").show();
     }
+
+    public void showVideo(String name){
+        try {
+            Stage stage = new Stage();
+            VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("video.fxml"));
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle(name + "视频通话");
+            stage.show();
+            stage.setOnCloseRequest(new EventHandler<WindowEvent>(){
+                @Override
+                public void handle(WindowEvent e){
+                    System.out.println("关闭视频通话");
+                    Content.isVideo=false;
+                    Content.isVoice=false;
+                }
+            });
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
 }

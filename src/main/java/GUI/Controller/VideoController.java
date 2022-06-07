@@ -9,7 +9,7 @@ public class VideoController {
     @FXML
     private ImageView iView;
     
-    VideoController(){
+    public VideoController(){
         Content.videoController = this;
     }
 

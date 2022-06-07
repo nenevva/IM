@@ -2,6 +2,7 @@ package Client;
 
 import DataBase.Message;
 import DataBase.MessageType;
+import GUI.Controller.PrivateController;
 import com.google.gson.Gson;
 import GUI.Controller.LoginController;
 import GUI.Controller.MainController;
@@ -21,7 +22,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import mFile.FileSaver;
+import Util.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
@@ -36,10 +37,10 @@ import javax.swing.plaf.metal.MetalBorders.PaletteBorder;
 
 public class ClientReceiveThread implements Runnable {
 
-    private Client client;
+    private final Client client;
     public Socket socket;
-    private String hostName;
-    private Gson gson = new Gson();
+    private final String hostName;
+    private final Gson gson = new Gson();
     private DataOutputStream output;
 
     protected LoginController loginController = LoginController.getInstance();
@@ -285,19 +286,12 @@ public class ClientReceiveThread implements Runnable {
                 System.out.println("开始视频通话");
                 //TODO 前端开启视频窗口
                 Content.isVideo=true;
-                Platform.runLater(()->{
-                    try {
-                        Stage stage = new Stage();
-                        VBox root = FXMLLoader.load(getClass().getClassLoader().getResource("video.xml"));
-                        Scene scene = new Scene(root);
-                        stage.setScene(scene);
-                        stage.setTitle(from + "视频通话");
-                        stage.show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                Content.isVoice=true;
                 new Thread(new VideoChatThread(hostName,1235,client.getId(),from)).start();
+                new Thread(new VoiceChatThread(hostName,1236,client.getId(),from)).start();
+                Platform.runLater(()->{
+                    MainController.getInstance().showVideo(Content.idNameRecord.get(from));
+                });
             }
             else if(body.equals("reject")){
                 System.out.println("对方拒绝了视频通话");
