@@ -287,11 +287,11 @@ public class ClientReceiveThread implements Runnable {
                 //TODO 前端开启视频窗口
                 Content.isVideo=true;
                 Content.isVoice=true;
-                new Thread(new VideoChatThread(hostName,1235,client.getId(),from)).start();
-                new Thread(new VoiceChatThread(hostName,1236,client.getId(),from)).start();
                 Platform.runLater(()->{
-                    MainController.getInstance().showVideo(Content.idNameRecord.get(from));
+                    mainController.showVideo(Content.idNameRecord.get(from));
                 });
+                new Thread(new VideoChatThread(Content.server,Content.port+1,client.getId(),from)).start();
+                new Thread(new VoiceChatThread(Content.server,Content.port+2,client.getId(),from)).start();
             }
             else if(body.equals("reject")){
                 System.out.println("对方拒绝了视频通话");

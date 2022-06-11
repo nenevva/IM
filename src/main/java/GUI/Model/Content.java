@@ -14,6 +14,8 @@ public class Content {
     public static Client client;
     public static String userName;
     public static int id=-1;
+    public static String server="localhost";
+    public static int port=7777;
     //public static ArrayList<String> msg = new ArrayList<>();
     public static String foucedPrivateUser;
     public static HashMap<String, Integer> userList = new HashMap();//当前的用户列表<用户名， 用户ID>

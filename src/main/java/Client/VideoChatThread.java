@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Random;
+
 import javafx.embed.swing.SwingFXUtils;
 
 public class VideoChatThread implements Runnable{
@@ -40,6 +42,12 @@ public class VideoChatThread implements Runnable{
 
             webcam = Webcam.getDefault();
             try{
+                Random random=new Random();
+                try {
+                    Thread.sleep(random.nextInt(500));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 webcam.open();
             }
             catch (WebcamLockException e){
@@ -54,42 +62,17 @@ public class VideoChatThread implements Runnable{
             output.writeInt(to);
             int count=0;
 
+            new Thread(new VideoWriteThread(output,webcam,webcamLock)).start();
             while(Content.isVideo){
-                writeImage(output);
                 BufferedImage img=readImage(input);
                 if(img==null)
                     continue;
-                File file=new File("img/"+from+"/"+to+"/");
-                file.mkdirs();
-                file=new File("img/"+from+"/"+to+"/"+count+++".jpg");
-                ImageIO.write(img,"jpg",file);
                 Image image = SwingFXUtils.toFXImage(img, null);
                 Platform.runLater(() -> {
                     Content.videoController.updateImage(image);
                 });
                 
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void writeImage(DataOutputStream output){
-        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-        BufferedImage image;
-        try {
-        if(webcamLock){
-            image=debug_image;
-        }
-        else{
-            image = webcam.getImage();
-        }
-
-            ImageIO.write(image,"jpg",byteArrayOutputStream);
-            byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
-            output.write(size);
-            output.write(byteArrayOutputStream.toByteArray());
-            output.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -110,5 +93,53 @@ public class VideoChatThread implements Runnable{
             e.printStackTrace();
         }
         return null;
+    }
+}
+
+class VideoWriteThread implements Runnable{
+    private DataOutputStream output;
+    private Webcam webcam;
+    private Boolean webcamLock=false;
+    BufferedImage debug_image;
+
+    public VideoWriteThread(DataOutputStream output, Webcam webcam, Boolean webcamLock) {
+        this.output = output;
+        this.webcam = webcam;
+        this.webcamLock = webcamLock;
+        if (webcamLock){
+            try {
+                debug_image=ImageIO.read(new File("video_chat_debug_help.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void run() {
+        while(Content.isVideo){
+            writeImage(output);
+        }
+    }
+
+    private void writeImage(DataOutputStream output){
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        BufferedImage image;
+        try {
+            if(webcamLock){
+                image=debug_image;
+            }
+            else{
+                image = webcam.getImage();
+            }
+
+            ImageIO.write(image,"jpg",byteArrayOutputStream);
+            byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
+            output.write(size);
+            output.write(byteArrayOutputStream.toByteArray());
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
