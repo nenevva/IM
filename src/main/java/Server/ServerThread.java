@@ -2,17 +2,17 @@ package Server;
 
 import DataBase.*;
 import com.google.gson.Gson;
+import Util.FileSaver;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ServerThread implements Runnable {
@@ -21,7 +21,12 @@ public class ServerThread implements Runnable {
     public Socket socket;
     private int id = -1;
     private Gson gson = new Gson();
-    private PrintWriter writer;
+    private DataOutputStream output;
+    private DataOutputStream videoChatOutput;
+    private String filename;
+    final int PART_BYTE=4096-2-4;
+    private int currentUploadFileNum=0;
+    private HashMap<Integer,FileSaver> fileSaverMap=new HashMap<>();
 
     public ServerThread(Socket socket) {
         this.socket = socket;
@@ -32,41 +37,53 @@ public class ServerThread implements Runnable {
 
         conn = DataBase.JDBC.getConnection();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(socket.getOutputStream());
+            output=new DataOutputStream(socket.getOutputStream());
+            DataInputStream input= new DataInputStream(socket.getInputStream());
+            byte[] buffer=new byte[4096];
+            byte[] temp=new byte[80];
             //TODO 文件传输
             while (true) {
-                String str = reader.readLine();//读取客户端输入的内容
+                int length=input.read(buffer,0,4096);
+                if(buffer[0]!=123){
+                    handle(buffer);
+                    continue;
+                }
+                String str=new String(buffer,0,length, StandardCharsets.UTF_8);
+                if(str.indexOf("\n")>-1){
+                    str=str.substring(0,str.indexOf("\n"));
+                }
                 if(str==null){
                     logout(id);
                     break;
                 }
+
+
                 Message message = gson.fromJson(str, Message.class);
+                if(message.getType()!=MessageType.USER_LIST)
+                    System.out.println("receive:  "+str);
                 String body="";
                 if(message!=null)
                     body = message.getBody();
                 else{
                 }
-                System.out.println("receive:  "+str);
                 String[] data;
 
                 switch (message.getType()) {
                     case LOGIN:
                         data = body.split(";");
                         if (body.length()<2) {
-                            send(writer, MessageType.FAIL, 0, 0, "输入不完整");
+                            send(output, MessageType.FAIL, 0, 0, "输入不完整");
                         }
                         else {
                             login(data[0], data[1]);
                         }
                         break;
                     case LOGOUT:
-                        logout(message.getFrom());
-                        break;
+                        throw new SocketException();
                     case REGISTER:
                         data = body.split(";");
                         if(body.length()<2) {
-                            send(writer, MessageType.FAIL,0,0,"输入不完整");
+                            send(output, MessageType.FAIL,0,0,"输入不完整");
                         }
                         else {
                             register(data[0],data[1]);
@@ -90,6 +107,18 @@ public class ServerThread implements Runnable {
                     case PRIVATE_MSG_LOG:
                         sendPrivateLog(Integer.parseInt(body.split(";")[0]), Integer.parseInt(body.split(";")[1]));
                         break;
+                    case FILE_INFO:
+                        saveFile(message.getTo(), body);
+                        break;
+                    case RECEIVE_FILE:
+                        sendFile(message.getTo(),message.getFrom(),body);
+                        break;
+                    case VIDEO_CHAT:
+                        sendVideoChatRequire(message.getTo());
+                        break;
+                    case VIDEO_CAHT_REPLY:
+                        sendVideoChatReply(message.getTo(),body);
+                        break;
                 }
             }
         }
@@ -106,10 +135,29 @@ public class ServerThread implements Runnable {
 
     }
 
-    private void send(PrintWriter writer, MessageType type, int from, int to, String body) {
-        System.out.println("send :"+gson.toJson(new Message(type, from, to, new Date(), body)));
-        writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
-        writer.flush();
+
+
+    private void send(DataOutputStream output, MessageType type, int from, int to, String body) {
+        String str=gson.toJson(new Message(type, from, to, new Date(), body));
+        if(type!=MessageType.USER_LIST)
+            System.out.println("send :"+str);
+        str=str+"\n";
+        byte[] data=new byte[4096];
+        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
+            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+        }
+        System.arraycopy(str.getBytes(StandardCharsets.UTF_8),0,data,0,4096);
+        try {
+            output.write(data);
+        }
+        catch (SocketException e){
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+//        writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
+//        writer.flush();
     }
     private void login(String username, String password) throws SQLException, IOException {
 
@@ -118,10 +166,9 @@ public class ServerThread implements Runnable {
         id = DataBase.User.userValidate(username, password);
         if (id != -1) {
             Server.clientMap.put(id, socket);
-            PrintWriter writer = new PrintWriter(socket.getOutputStream());
-            send(writer, MessageType.SUCCESS, 0, id, "login success");
+            send(output, MessageType.SUCCESS, 0, id, "login success");
         } else {
-            send(writer, MessageType.FAIL, 0, id, "login fail");
+            send(output, MessageType.FAIL, 0, id, "login fail");
         }
     }
 
@@ -129,7 +176,7 @@ public class ServerThread implements Runnable {
         System.out.println("username:" + username + " password:" + password);
         //验证用户名是否已存在
         if (!DataBase.User.isUsernameAvailable(username)) {
-            send(writer, MessageType.FAIL, 0, id, "register fail");
+            send(output, MessageType.FAIL, 0, id, "register fail");
             return;
         }
         //创建用户
@@ -137,12 +184,13 @@ public class ServerThread implements Runnable {
         User usr = new User(id, password, username);
         DataBase.User.userCreate(usr);
         Server.clientMap.put(id, socket);
-        send(writer,MessageType.SUCCESS,0,id,"register success");
+        send(output,MessageType.SUCCESS,0,id,"register success");
     }
 
     //向用户所在的群聊通知该用户下线
     private void logout(int from) {
         //遍历from所在的群聊列表，并sendGroup
+        Server.clientMap.remove(id);
         try {
             Server.nameList= User.getAllName();
         } catch (SQLException e) {
@@ -150,7 +198,7 @@ public class ServerThread implements Runnable {
         }
         sendGroup(0, 0, "用户"+Server.nameList.get(from) + "已下线");
         System.out.println("用户"+Server.nameList.get(from) + "已下线");
-        Server.clientMap.remove(id);
+
     }
 
     //to为群聊id
@@ -159,8 +207,8 @@ public class ServerThread implements Runnable {
         for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
             if(entry.getKey()!=from) {
                 try {
-                    PrintWriter writer=new PrintWriter(entry.getValue().getOutputStream());
-                    send(writer,MessageType.GROUP_MSG,from,to,body);
+                    DataOutputStream output=new DataOutputStream(entry.getValue().getOutputStream());
+                    send(output,MessageType.GROUP_MSG,from,to,body);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -172,12 +220,13 @@ public class ServerThread implements Runnable {
         DataBase.ChatContent.saveMsg(from,to,body,new Date(),0);
         Socket socketTo=Server.clientMap.get(to);
         if(socketTo==null) {
-            send(writer, MessageType.FAIL, 0, from, "用户未上线");
+            send(output, MessageType.FAIL, 0, from, "用户未上线");
         }
         else{
             try {
-                PrintWriter writer = new PrintWriter(socketTo.getOutputStream());
-                send(writer, MessageType.PRIVATE_MSG, from, to, body);
+                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                //PrintWriter writer = new PrintWriter(socketTo.getOutputStream());
+                send(output, MessageType.PRIVATE_MSG, from, to, body);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -199,7 +248,7 @@ public class ServerThread implements Runnable {
                 body+=entry.getKey()+":"+name+";";
             }
         }
-        send(writer, MessageType.USER_LIST, 0, from, body);
+        send(output, MessageType.USER_LIST, 0, from, body);
     }
 
     private void sendUserNameList(int from){
@@ -215,16 +264,148 @@ public class ServerThread implements Runnable {
                 body+=entry.getKey()+":"+name+";";
         }
         System.out.println(Server.nameList);
-        send(writer, MessageType.USER_NAME_LIST, 0, from, body);
+        send(output, MessageType.USER_NAME_LIST, 0, from, body);
     }
 
     private void sendGroupLog(int groupID){
         ArrayList<ChatLog> chatLogs=DataBase.ChatContent.getGroupChatLog(groupID);
-        send(writer,MessageType.GROUP_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
+        send(output,MessageType.GROUP_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
     }
 
     private void sendPrivateLog(int id1,int id2){
         ArrayList<ChatLog> chatLogs=DataBase.ChatContent.getPrivateChatLog(id1,id2);
-        send(writer,MessageType.PRIVATE_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
+        send(output,MessageType.PRIVATE_MSG_LOG,0,id,gson.toJson(new ChatLogList(chatLogs), ChatLogList.class));
     }
+
+    private void saveFile(int to,String body){
+        currentUploadFileNum++;
+        boolean isGroup= body.substring(0,body.indexOf(";")).equals("1");
+        body=body.substring(body.indexOf(";")+1);
+        long fileLength= Long.parseLong(body.substring(0,body.indexOf(";")));
+        String filename=body.substring(body.indexOf(";")+1);
+        FileSaver fileSaver=new FileSaver(id,to,fileLength,filename,isGroup);
+        fileSaver.startSave();
+        fileSaverMap.put(currentUploadFileNum,fileSaver);
+
+        send(output,MessageType.UPLOAD_FILE,0,id,""+currentUploadFileNum+";"+filename);
+    }
+
+    private void handle(byte[] data){
+        if(data[0]==1){
+            int index=data[1];
+            FileSaver fileSaver=fileSaverMap.get(index);
+            int part=(data[2]&0xff)<<24|(data[3]&0xff)<<16|(data[4]&0xff)<<8|(data[5]&0xff);
+            try {
+                fileSaver.write(part,data);
+                if(fileSaver.isFinish()){
+                    if(fileSaver.isGroup()){
+                        send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,fileSaver.getFileName());
+                        for(Map.Entry<Integer,Socket> entry:Server.clientMap.entrySet()) {
+                            if(entry.getKey()!=id) {
+                                try {
+                                    DataOutputStream output=new DataOutputStream(entry.getValue().getOutputStream());
+                                    send(output,MessageType.FILE_INFO,id,fileSaver.getTo(),"1;"+fileSaver.getFileLength()+";"+fileSaver.getFileName());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,fileSaver.getFileName());
+                        Socket socketTo=Server.clientMap.get(fileSaver.getTo());
+                        if(socketTo!=null){
+                            DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                            send(output,MessageType.FILE_INFO,id,fileSaver.getTo(),"0;"+fileSaver.getFileLength()+";"+fileSaver.getFileName());
+                        }
+                    }
+                    fileSaverMap.remove(index);
+                    currentUploadFileNum--;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendFile(int from,int to,String body){
+        boolean isGroup= body.substring(0,body.indexOf(";")).equals("1");
+        filename=body.substring(body.indexOf(";")+1);
+        int order= Integer.parseInt(filename.substring(0,filename.indexOf(";")));
+        filename=filename.substring(filename.indexOf(";")+1);
+        File file=null;
+        if(isGroup){
+            int groupID=Integer.parseInt(filename.substring(0,filename.indexOf(";")));
+            filename=filename.substring(filename.indexOf(";")+1);
+            file=new File("file/group/"+groupID+"/"+from+"/"+filename);
+        }
+        else {
+            file=new File("file/private/"+from+"/"+to+"/"+filename);
+        }
+        System.out.println(file.getName());
+        if(file!=null) {
+            System.out.println("尝试发送" + file.getName() + "给服务器");
+            byte[] data = new byte[4096];
+            int partNum = (int) (file.length() / PART_BYTE + 1);
+            try {
+                BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
+                byte[] fileBuffer = new byte[PART_BYTE];
+                int part_i = 0;
+                while (bin.read(fileBuffer) > 0) {
+                    part_i++;
+                    data[0] = 1;
+                    data[1] = (byte) order;
+                    System.arraycopy(intTobyte(part_i), 0, data, 2, 4);
+                    System.arraycopy(fileBuffer, 0, data, 6, PART_BYTE);
+                    output.write(data);
+                }
+                bin.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendVideoChatRequire(int to){
+        Socket socketTo=Server.clientMap.get(to);
+        if(socketTo==null) {
+            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+        }
+        else{
+            try {
+                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                send(output, MessageType.VIDEO_CHAT, id, to, "");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendVideoChatReply(int to,String relpy){
+        Socket socketTo=Server.clientMap.get(to);
+        if(socketTo==null) {
+            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+        }
+        else{
+            try {
+                DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
+                send(output, MessageType.VIDEO_CAHT_REPLY, id, to, relpy);
+                if(relpy.equals("ok")){
+                    send(this.output,MessageType.VIDEO_CAHT_REPLY,to,id,relpy);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //int 转化为字节数组
+    public static byte[] intTobyte(int num) {
+        return new byte[] {(byte)((num>>24)&0xff),(byte)((num>>16)&0xff),(byte)((num>>8)&0xff),(byte)(num&0xff)};
+    }
+
+
 }

@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Date;
 
 public class ChatContent {
+
     public static int saveMsg(int senderID, int receiverID, String body, Date date,int isPublic){
         try {
             Connection conn = JDBC.getConnection();
