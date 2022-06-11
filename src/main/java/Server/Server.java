@@ -22,8 +22,8 @@ public class Server {
         this.port = port;
         try {
             serverSocket = new ServerSocket(port);
-            new Thread(new ServerVideo(1235)).start();
-            new Thread(new ServerVoice(1236)).start();
+            new Thread(new ServerVideo(port+1)).start();
+            new Thread(new ServerVoice(port+2)).start();
             while(true) {
                 Socket socket = serverSocket.accept();
                 socketList.add(socket);

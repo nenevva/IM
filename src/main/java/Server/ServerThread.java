@@ -1,6 +1,5 @@
 package Server;
 
-import Client.Client;
 import DataBase.*;
 import com.google.gson.Gson;
 import Util.FileSaver;
@@ -361,7 +360,6 @@ public class ServerThread implements Runnable {
                     output.write(data);
                 }
                 bin.close();
-                Client.upLoadFileMap.remove(body);
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();

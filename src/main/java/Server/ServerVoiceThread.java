@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 public class ServerVoiceThread implements Runnable{
     public Socket socket;
     private DataOutputStream output;
+    int from;
     public ServerVoiceThread(Socket socket) {
         this.socket = socket;
     }
@@ -18,7 +19,7 @@ public class ServerVoiceThread implements Runnable{
         try {
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
-            int from=input.readInt();
+            from=input.readInt();
             int to=input.readInt();
             ServerVoice.voiceClientMap.put(from,socket);
             while(true){
@@ -34,6 +35,7 @@ public class ServerVoiceThread implements Runnable{
         }
         catch (SocketException e){
             System.out.println("音频通话结束");
+            ServerVoice.voiceClientMap.remove(from);
         }
         catch (IOException e) {
             e.printStackTrace();
