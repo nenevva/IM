@@ -32,8 +32,12 @@ public class ServerVideoThread implements Runnable{
 
                 if(ServerVideo.videoClientMap.get(to)!=null){
                     DataOutputStream datato =new DataOutputStream(ServerVideo.videoClientMap.get(to).getOutputStream());
-                    datato.write(sizeAr);
-                    datato.write(imageAr);
+                    byte[] data=new byte[sizeAr.length+imageAr.length];
+                    System.arraycopy(sizeAr,0,data,0,4);
+                    System.arraycopy(imageAr,0,data,4,data.length-4);
+//                    datato.write(sizeAr);
+//                    datato.write(imageAr);
+                    datato.write(data);
                     datato.flush();
                 }
             }
