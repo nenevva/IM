@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class ServerThread implements Runnable {
 
-    private int byte_length=1024;
+    private int byte_length=8192;
     private Connection conn = null;
     public Socket socket;
     private int id = -1;
