@@ -20,7 +20,6 @@ public class ServerVoice implements Runnable{
     @Override
     public void run() {
         try {
-            System.out.println("监听音频传输");
             serverSocket = new ServerSocket(port);
             while(true) {
                 Socket socket = serverSocket.accept();
