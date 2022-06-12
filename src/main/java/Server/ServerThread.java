@@ -47,7 +47,6 @@ public class ServerThread implements Runnable {
             //TODO 文件传输
             while (true) {
                 int length=input.readInt();
-                System.out.println("length:"+length);
                 byte[] buffer=new byte[length];
                 input.readFully(buffer);
                 fos.write(length);
