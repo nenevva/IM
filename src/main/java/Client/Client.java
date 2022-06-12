@@ -151,6 +151,6 @@ public class Client {
     public void sendVideoChatReply(int to,String reply){
 
         Content.videoChatID=to;
-        sendMsg(MessageType.VIDEO_CAHT_REPLY,to,reply);
+        sendMsg(MessageType.VIDEO_CHAT_REPLY,to,reply);
     }
 }

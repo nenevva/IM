@@ -1,24 +1,15 @@
 package Client;
 
 import DataBase.Message;
-import DataBase.MessageType;
-import GUI.Controller.PrivateController;
 import com.google.gson.Gson;
 import GUI.Controller.LoginController;
 import GUI.Controller.MainController;
 import GUI.Model.Content;
-import GUI.Model.StageManager;
 import javafx.application.Platform;
-import javafx.beans.value.WeakChangeListener;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -32,8 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-
-import javax.swing.plaf.metal.MetalBorders.PaletteBorder;
 
 public class ClientReceiveThread implements Runnable {
 
@@ -124,7 +113,7 @@ public class ClientReceiveThread implements Runnable {
                     case FILE_INFO:
                         receiveFileInfo(message.getFrom(), message.getTo(), body);
                         break;
-                    case VIDEO_CAHT_REPLY:
+                    case VIDEO_CHAT_REPLY:
                         handleVideoChatReply(message.getFrom(),body);
                         break;
                     case VIDEO_CHAT:
