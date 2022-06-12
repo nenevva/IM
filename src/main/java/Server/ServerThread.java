@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class ServerThread implements Runnable {
 
-    private int byte_length=1024;
+    private int byte_length=8192;
     private Connection conn = null;
     public Socket socket;
     private int id = -1;
@@ -50,6 +50,7 @@ public class ServerThread implements Runnable {
                 //int length=input.read(buffer,0,byte_length);
                 //byte[] buffer=new byte[byte_length];
                 int length=input.readInt();
+                System.out.println("length:"+length);
                 byte[] buffer=new byte[length];
                 input.readFully(buffer);
                 fos.write(length);
