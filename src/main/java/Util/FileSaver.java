@@ -15,7 +15,7 @@ public class FileSaver {
     private String fileName;
     private FileOutputStream output;
     private boolean isGroup;
-    final int PART_BYTE=8196-2-4;
+    final int PART_BYTE=8196*20-2-4;
     private String absolutePath;
 
     public FileSaver(int from, int to, long fileLength, String fileName, boolean isGroup) {
