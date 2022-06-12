@@ -1,5 +1,7 @@
 package Util;
 
+import GUI.Model.Content;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,7 +17,6 @@ public class FileSaver {
     private final String fileName;
     private FileOutputStream output;
     private final boolean isGroup;
-    final int PART_BYTE=4096-2-4;
     private String absolutePath;
 
     public FileSaver(int from, int to, long fileLength, String fileName, boolean isGroup) {
@@ -25,7 +26,7 @@ public class FileSaver {
         this.fileName = fileName;
         this.isGroup = isGroup;
         current=0;
-        parts= (int) (fileLength/PART_BYTE+1);
+        parts= (int) (fileLength/ Content.PART_BYTE+1);
 
     }
 
@@ -51,11 +52,11 @@ public class FileSaver {
 
         current++;
         if(current<parts) {
-            output.write(data, 6, PART_BYTE);
+            output.write(data, 6, Content.PART_BYTE);
             output.flush();
         }
         else{
-            output.write(data,6, (int) (fileLength-PART_BYTE*(current-1)));
+            output.write(data,6, (int) (fileLength- Content.PART_BYTE*(current-1)));
             output.flush();
             output.close();
         }

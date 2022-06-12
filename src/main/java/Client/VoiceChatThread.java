@@ -66,10 +66,10 @@ public class VoiceChatThread implements Runnable{
     private void readAudio(DataInputStream input) throws IOException {
         //收
         byte[] audioBuffer=new byte[4096];
-        int readLen = input.read(audioBuffer);
+        input.readFully(audioBuffer);
         if (audioBuffer != null) {
             //播放对方发送来的音频
-            audioOut.write(audioBuffer, 0, readLen);
+            audioOut.write(audioBuffer, 0, audioBuffer.length);
         }
     }
 }

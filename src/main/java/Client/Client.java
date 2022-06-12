@@ -8,6 +8,7 @@ import Util.FileSaver;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
@@ -19,6 +20,7 @@ public class Client {
     private Socket socket;
     private PrintWriter writer;
     private BufferedReader reader;
+    private DataOutputStream outputStream;
     private final Gson gson = new Gson();
 
     public Client(String hostName, int port) {
@@ -28,6 +30,7 @@ public class Client {
         try {
             socket = new Socket(hostName,port);
             writer = new PrintWriter(socket.getOutputStream());
+            outputStream=new DataOutputStream(socket.getOutputStream());
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             new Thread(new ClientReceiveThread(hostName, this,socket)).start();
         } catch (IOException e) {
@@ -38,11 +41,19 @@ public class Client {
     public void sendMsg(MessageType type,int to,String s){
         String str=gson.toJson(new Message(type,id,to,new Date(),s));
         str=str+"\n";
-        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
-            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+//        if(str.getBytes(StandardCharsets.UTF_8).length<Content.bytelength){
+//            str=str+new String(new char[Content.bytelength-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+//        }
+//        writer.print(str);
+//        writer.flush();
+        byte[] sizeAr = ByteBuffer.allocate(4).putInt(str.getBytes(StandardCharsets.UTF_8).length).array();
+        try {
+            outputStream.write(sizeAr);
+            outputStream.write(str.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        writer.print(str);
-        writer.flush();
+
     }
     public void closeConnect() {
         if(writer != null) {

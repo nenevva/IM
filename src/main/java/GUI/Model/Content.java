@@ -14,7 +14,8 @@ public class Content {
     public static Client client;
     public static String userName;
     public static int id=-1;
-    public static String server="localhost";
+    public static String server="nene.ink";
+    public static boolean onFile=false;
     public static int port=7777;
     //public static ArrayList<String> msg = new ArrayList<>();
     public static String foucedPrivateUser;
@@ -24,7 +25,8 @@ public class Content {
     public static HashMap<Integer,String> idNameRecord=new HashMap<>();//记录id与用户名的映射关系
     public static int videoChatID;//视频聊天的对象
     public static VideoController videoController;
-    public static final int PART_BYTE=4096-2-4;
+    public static int bytelength=8196*20;
+    public static final int PART_BYTE=bytelength-2-4;
     public static HashMap<String, File> upLoadFileMap =new HashMap<>();
     public static HashMap<Integer,HashMap<String, FileSaver>> privateFileReceiveMap =new HashMap<>();
     public static HashMap<Integer,HashMap<String, FileSaver>> groupFileReceiveMap =new HashMap<>();

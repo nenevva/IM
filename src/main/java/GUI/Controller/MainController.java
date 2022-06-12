@@ -63,8 +63,10 @@ public class MainController {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
                     }
-                    if(!Content.client.isClose())
+                    if(!Content.client.isClose()) {
+                        if(!Content.onFile)
                         updateUserList();
+                    }
 
                 }
             }
@@ -75,7 +77,7 @@ public class MainController {
             public void run() {
                 while (true) {
                     try {
-                        if(!Content.client.isClose())
+                        if(!Content.client.isClose()&&!Content.onFile)
                             updateIDRecord();
                         Thread.sleep(100000);
                     } catch (InterruptedException ex) {

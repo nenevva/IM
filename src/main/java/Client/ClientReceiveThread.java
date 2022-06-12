@@ -18,6 +18,7 @@ import Util.FileSaver;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,9 +48,13 @@ public class ClientReceiveThread implements Runnable {
         try {
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
-            byte[] buffer=new byte[4096];
+
             while (true) {
-                int length=input.read(buffer,0,4096);
+//                byte[] buffer=new byte[Content.bytelength];
+//                int length=input.read(buffer,0,Content.bytelength);
+                int length=input.readInt();
+                byte[] buffer=new byte[length];
+                input.readFully(buffer);
                 if(buffer[0]!=123){
                     handle(buffer);
                     continue;
@@ -173,12 +178,14 @@ public class ClientReceiveThread implements Runnable {
     }
 
     private void uploadFile(String body){
+        Content.onFile=true;
         int order= Integer.parseInt(body.substring(0,body.indexOf(";")));
         String fileName=body.substring(body.indexOf(";")+1);
+        System.out.println("order is "+order);
         File file=Content.upLoadFileMap.get(fileName);
         if(file!=null){
             System.out.println("尝试发送"+file.getName()+"给服务器");
-            byte[] data=new byte[4096];
+            byte[] data=new byte[Content.bytelength];
             int partNum= (int) (file.length()/Content.PART_BYTE+1);
             try {
                 BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
@@ -190,7 +197,10 @@ public class ClientReceiveThread implements Runnable {
                     data[1]= (byte) order;
                     System.arraycopy(intTobyte(part_i),0,data,2,4);
                     System.arraycopy(fileBuffer,0,data,6,Content.PART_BYTE);
+                    byte[] sizeAr = ByteBuffer.allocate(4).putInt(data.length).array();
+                    output.write(sizeAr);
                     output.write(data);
+                    output.flush();
                 }
                 bin.close();
 
@@ -208,6 +218,7 @@ public class ClientReceiveThread implements Runnable {
     private void uploadFileSuccess(String body){
         System.out.println("文件"+body+"上传成功");
         Content.upLoadFileMap.remove(body);
+        Content.onFile=false;
         //前端显示发送完成
         Platform.runLater(()->{
             Stage alert = new Stage();

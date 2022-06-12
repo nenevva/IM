@@ -81,11 +81,11 @@ public class VideoChatThread implements Runnable{
     private BufferedImage readImage(DataInputStream input){
         byte[] sizeAr = new byte[4];
         try {
-            input.read(sizeAr);
+            input.readFully(sizeAr);
             int size = ByteBuffer.wrap(sizeAr).asIntBuffer().get();
 
             byte[] imageAr = new byte[size];
-            input.read(imageAr);
+            input.readFully(imageAr);
 
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageAr));
             return image;
@@ -93,6 +93,31 @@ public class VideoChatThread implements Runnable{
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void writeImage(DataOutputStream output){
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        BufferedImage image;
+        try {
+            if(webcamLock){
+                image=debug_image;
+            }
+            else{
+                image = webcam.getImage();
+            }
+
+            ImageIO.write(image,"jpg",byteArrayOutputStream);
+            byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
+            byte[] data=new byte[size.length+byteArrayOutputStream.toByteArray().length];
+            System.arraycopy(size,0,data,0,4);
+            System.arraycopy(byteArrayOutputStream.toByteArray(),0,data,4,data.length-4);
+//            output.write(size);
+//            output.write(byteArrayOutputStream.toByteArray());
+            output.write(data);
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
