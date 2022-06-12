@@ -34,7 +34,7 @@ public class ServerVoiceThread implements Runnable{
             }
         }
         catch (SocketException e){
-            System.out.println("音频通话结束");
+            System.out.println("voice chat finish");
             ServerVoice.voiceClientMap.remove(from);
         }
         catch (IOException e) {

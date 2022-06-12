@@ -39,7 +39,7 @@ public class ServerVideoThread implements Runnable{
             }
         }
         catch (SocketException e){
-            System.out.println("视频通话结束");
+            System.out.println("video chat finish");
         }
         catch (IOException e) {
             e.printStackTrace();

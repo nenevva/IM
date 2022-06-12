@@ -22,7 +22,6 @@ public class ServerThread implements Runnable {
     private int id = -1;
     private Gson gson = new Gson();
     private DataOutputStream output;
-    private DataOutputStream videoChatOutput;
     private String filename;
     final int PART_BYTE=4096-2-4;
     private int currentUploadFileNum=0;
@@ -156,15 +155,14 @@ public class ServerThread implements Runnable {
         catch (IOException e) {
             e.printStackTrace();
         }
-//        writer.println(gson.toJson(new Message(type, from, to, new Date(), body)));
-//        writer.flush();
     }
     private void login(String username, String password) throws SQLException, IOException {
 
-        System.out.println("username:" + username + " password:" + password);
+
         //数据库验证账号密码
         id = DataBase.User.userValidate(username, password);
         if (id != -1) {
+            System.out.println("username:" + username + " login");
             Server.clientMap.put(id, socket);
             send(output, MessageType.SUCCESS, 0, id, "login success");
         } else {
@@ -173,7 +171,7 @@ public class ServerThread implements Runnable {
     }
 
     private void register(String username, String password) throws SQLException {
-        System.out.println("username:" + username + " password:" + password);
+
         //验证用户名是否已存在
         if (!DataBase.User.isUsernameAvailable(username)) {
             send(output, MessageType.FAIL, 0, id, "register fail");
@@ -184,6 +182,7 @@ public class ServerThread implements Runnable {
         User usr = new User(id, password, username);
         DataBase.User.userCreate(usr);
         Server.clientMap.put(id, socket);
+        System.out.println("register: username:" + username + " password:" + password+" id:"+id);
         send(output,MessageType.SUCCESS,0,id,"register success");
     }
 
@@ -197,7 +196,7 @@ public class ServerThread implements Runnable {
             e.printStackTrace();
         }
         sendGroup(0, 0, "用户"+Server.nameList.get(from) + "已下线");
-        System.out.println("用户"+Server.nameList.get(from) + "已下线");
+        System.out.println("user "+Server.nameList.get(from) + "logout");
 
     }
 
@@ -225,7 +224,6 @@ public class ServerThread implements Runnable {
         else{
             try {
                 DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
-                //PrintWriter writer = new PrintWriter(socketTo.getOutputStream());
                 send(output, MessageType.PRIVATE_MSG, from, to, body);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -263,7 +261,6 @@ public class ServerThread implements Runnable {
                 String name= entry.getValue();
                 body+=entry.getKey()+":"+name+";";
         }
-        System.out.println(Server.nameList);
         send(output, MessageType.USER_NAME_LIST, 0, from, body);
     }
 
@@ -288,6 +285,7 @@ public class ServerThread implements Runnable {
         fileSaverMap.put(currentUploadFileNum,fileSaver);
 
         send(output,MessageType.UPLOAD_FILE,0,id,""+currentUploadFileNum+";"+filename);
+        System.out.println("start receive file "+filename);
     }
 
     private void handle(byte[] data){
@@ -312,6 +310,7 @@ public class ServerThread implements Runnable {
                         }
                     }
                     else {
+                        System.out.println("file "+fileSaver.getFileName()+" receive success");
                         send(output,MessageType.UPLOAD_FILE_SUCCESS,0,id,fileSaver.getFileName());
                         Socket socketTo=Server.clientMap.get(fileSaver.getTo());
                         if(socketTo!=null){
@@ -344,7 +343,7 @@ public class ServerThread implements Runnable {
         }
         System.out.println(file.getName());
         if(file!=null) {
-            System.out.println("尝试发送" + file.getName() + "给服务器");
+            System.out.println("send file " + file.getName() + "to user "+Server.nameList.get(id));
             byte[] data = new byte[4096];
             int partNum = (int) (file.length() / PART_BYTE + 1);
             try {

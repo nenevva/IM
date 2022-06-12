@@ -24,6 +24,7 @@ public class Server {
             serverSocket = new ServerSocket(port);
             new Thread(new ServerVideo(port+1)).start();
             new Thread(new ServerVoice(port+2)).start();
+            System.out.println("server starts");
             while(true) {
                 Socket socket = serverSocket.accept();
                 socketList.add(socket);
