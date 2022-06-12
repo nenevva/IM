@@ -115,7 +115,7 @@ public class ServerThread implements Runnable {
                     case VIDEO_CHAT:
                         sendVideoChatRequire(message.getTo());
                         break;
-                    case VIDEO_CAHT_REPLY:
+                    case VIDEO_CHAT_REPLY:
                         sendVideoChatReply(message.getTo(),body);
                         break;
                 }
@@ -371,7 +371,7 @@ public class ServerThread implements Runnable {
     private void sendVideoChatRequire(int to){
         Socket socketTo=Server.clientMap.get(to);
         if(socketTo==null) {
-            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+            send(output, MessageType.VIDEO_CHAT_REPLY, 0, id, "fail;用户未上线");
         }
         else{
             try {
@@ -386,14 +386,14 @@ public class ServerThread implements Runnable {
     private void sendVideoChatReply(int to,String relpy){
         Socket socketTo=Server.clientMap.get(to);
         if(socketTo==null) {
-            send(output, MessageType.VIDEO_CAHT_REPLY, 0, id, "fail;用户未上线");
+            send(output, MessageType.VIDEO_CHAT_REPLY, 0, id, "fail;用户未上线");
         }
         else{
             try {
                 DataOutputStream output=new DataOutputStream(socketTo.getOutputStream());
-                send(output, MessageType.VIDEO_CAHT_REPLY, id, to, relpy);
+                send(output, MessageType.VIDEO_CHAT_REPLY, id, to, relpy);
                 if(relpy.equals("ok")){
-                    send(this.output,MessageType.VIDEO_CAHT_REPLY,to,id,relpy);
+                    send(this.output,MessageType.VIDEO_CHAT_REPLY,to,id,relpy);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
