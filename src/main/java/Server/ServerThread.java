@@ -36,13 +36,18 @@ public class ServerThread implements Runnable {
 
         conn = DataBase.JDBC.getConnection();
         try {
+            File file=new File("log.bin");
+            FileOutputStream fos=new FileOutputStream(file);
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
             byte[] buffer=new byte[4096];
             byte[] temp=new byte[80];
+            byte[] my=new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
             //TODO 文件传输
             while (true) {
                 int length=input.read(buffer,0,4096);
+                fos.write(buffer);
+                fos.write(my);
                 if(buffer[0]!=123){
                     handle(buffer);
                     continue;
@@ -196,7 +201,7 @@ public class ServerThread implements Runnable {
             e.printStackTrace();
         }
         sendGroup(0, 0, "用户"+Server.nameList.get(from) + "已下线");
-        System.out.println("user "+Server.nameList.get(from) + "logout");
+        System.out.println("user "+Server.nameList.get(from) + " logout");
 
     }
 
