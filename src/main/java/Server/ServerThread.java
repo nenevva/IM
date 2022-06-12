@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class ServerThread implements Runnable {
 
-    private int byte_length=8192;
+    private int byte_length=8196*20;
     private Connection conn = null;
     public Socket socket;
     private int id = -1;
@@ -43,12 +43,9 @@ public class ServerThread implements Runnable {
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
 
-            byte[] temp=new byte[80];
             byte[] my=new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
             //TODO 文件传输
             while (true) {
-                //int length=input.read(buffer,0,byte_length);
-                //byte[] buffer=new byte[byte_length];
                 int length=input.readInt();
                 System.out.println("length:"+length);
                 byte[] buffer=new byte[length];
@@ -154,11 +151,6 @@ public class ServerThread implements Runnable {
         if(type!=MessageType.USER_LIST)
             System.out.println("send :"+str);
         str=str+"\n";
-//        byte[] data=new byte[byte_length];
-//        if(str.getBytes(StandardCharsets.UTF_8).length<byte_length){
-//            str=str+new String(new char[byte_length-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
-//        }
-//        System.arraycopy(str.getBytes(StandardCharsets.UTF_8),0,data,0,byte_length);
         byte[] data=str.getBytes(StandardCharsets.UTF_8);
         try {
             byte[] sizeAr = ByteBuffer.allocate(4).putInt(data.length).array();
