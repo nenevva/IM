@@ -24,7 +24,7 @@ public class ServerVoiceThread implements Runnable{
             ServerVoice.voiceClientMap.put(from,socket);
             while(true){
                 byte[] buffer=new byte[4096];
-                input.read(buffer);
+                input.readFully(buffer);
 
                 if(ServerVoice.voiceClientMap.get(to)!=null){
                     DataOutputStream datato =new DataOutputStream(ServerVoice.voiceClientMap.get(to).getOutputStream());
