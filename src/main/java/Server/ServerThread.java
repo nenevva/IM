@@ -7,6 +7,7 @@ import Util.FileSaver;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,13 +18,14 @@ import java.util.Map;
 
 public class ServerThread implements Runnable {
 
+    private int byte_length=1024;
     private Connection conn = null;
     public Socket socket;
     private int id = -1;
     private Gson gson = new Gson();
     private DataOutputStream output;
     private String filename;
-    final int PART_BYTE=4096-2-4;
+    final int PART_BYTE=byte_length-2-4;
     private int currentUploadFileNum=0;
     private HashMap<Integer,FileSaver> fileSaverMap=new HashMap<>();
 
@@ -40,12 +42,17 @@ public class ServerThread implements Runnable {
             FileOutputStream fos=new FileOutputStream(file);
             output=new DataOutputStream(socket.getOutputStream());
             DataInputStream input= new DataInputStream(socket.getInputStream());
-            byte[] buffer=new byte[4096];
+
             byte[] temp=new byte[80];
             byte[] my=new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
             //TODO 文件传输
             while (true) {
-                int length=input.read(buffer,0,4096);
+                //int length=input.read(buffer,0,byte_length);
+                //byte[] buffer=new byte[byte_length];
+                int length=input.readInt();
+                byte[] buffer=new byte[length];
+                input.readFully(buffer);
+                fos.write(length);
                 fos.write(buffer);
                 fos.write(my);
                 if(buffer[0]!=123){
@@ -146,12 +153,15 @@ public class ServerThread implements Runnable {
         if(type!=MessageType.USER_LIST)
             System.out.println("send :"+str);
         str=str+"\n";
-        byte[] data=new byte[4096];
-        if(str.getBytes(StandardCharsets.UTF_8).length<4096){
-            str=str+new String(new char[4096-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
-        }
-        System.arraycopy(str.getBytes(StandardCharsets.UTF_8),0,data,0,4096);
+//        byte[] data=new byte[byte_length];
+//        if(str.getBytes(StandardCharsets.UTF_8).length<byte_length){
+//            str=str+new String(new char[byte_length-str.getBytes(StandardCharsets.UTF_8).length]).replace("\0", " ");
+//        }
+//        System.arraycopy(str.getBytes(StandardCharsets.UTF_8),0,data,0,byte_length);
+        byte[] data=str.getBytes(StandardCharsets.UTF_8);
         try {
+            byte[] sizeAr = ByteBuffer.allocate(4).putInt(data.length).array();
+            output.write(sizeAr);
             output.write(data);
         }
         catch (SocketException e){
@@ -349,7 +359,7 @@ public class ServerThread implements Runnable {
         System.out.println(file.getName());
         if(file!=null) {
             System.out.println("send file " + file.getName() + "to user "+Server.nameList.get(id));
-            byte[] data = new byte[4096];
+            byte[] data = new byte[byte_length];
             int partNum = (int) (file.length() / PART_BYTE + 1);
             try {
                 BufferedInputStream bin = new BufferedInputStream(new FileInputStream(file));
@@ -361,6 +371,8 @@ public class ServerThread implements Runnable {
                     data[1] = (byte) order;
                     System.arraycopy(intTobyte(part_i), 0, data, 2, 4);
                     System.arraycopy(fileBuffer, 0, data, 6, PART_BYTE);
+                    byte[] sizeAr = ByteBuffer.allocate(4).putInt(data.length).array();
+                    output.write(sizeAr);
                     output.write(data);
                 }
                 bin.close();

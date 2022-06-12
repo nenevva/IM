@@ -21,15 +21,20 @@ public class ServerVideoThread implements Runnable{
             int from=input.readInt();
             int to=input.readInt();
             ServerVideo.videoClientMap.put(from,socket);
+
+            File file=new File("log_video"+from+".bin");
+            FileOutputStream fos=new FileOutputStream(file);
             int count=0;
+            byte[] my=new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
             while(true){
                 byte[] sizeAr = new byte[4];
-                input.read(sizeAr);
+                input.readFully(sizeAr);
                 int size = ByteBuffer.wrap(sizeAr).asIntBuffer().get();
-
+                fos.write(sizeAr);
                 byte[] imageAr = new byte[size];
-                input.read(imageAr);
-
+                input.readFully(imageAr);
+                fos.write(imageAr);
+                fos.write(my);
                 if(ServerVideo.videoClientMap.get(to)!=null){
                     DataOutputStream datato =new DataOutputStream(ServerVideo.videoClientMap.get(to).getOutputStream());
                     byte[] data=new byte[sizeAr.length+imageAr.length];
