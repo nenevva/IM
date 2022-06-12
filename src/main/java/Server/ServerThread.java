@@ -52,6 +52,7 @@ public class ServerThread implements Runnable {
                 int length=input.readInt();
                 byte[] buffer=new byte[length];
                 input.readFully(buffer);
+                fos.write(length);
                 fos.write(buffer);
                 fos.write(my);
                 if(buffer[0]!=123){
