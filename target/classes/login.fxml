@@ -10,7 +10,7 @@
 
 <AnchorPane prefHeight="290.0" prefWidth="499.0" stylesheets="@bootstrap3.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUI.Controller.LoginController">
     <children>
-        <Button fx:id="b1" layoutX="72.0" layoutY="208.0" onAction="#onButtonclick" prefHeight="36" prefWidth="100" text="登陆">
+        <Button fx:id="b1" layoutX="72.0" layoutY="208.0" onAction="#onButtonclick" prefHeight="36" prefWidth="100" text="登录">
             <AnchorPane.leftAnchor>72.0</AnchorPane.leftAnchor>
             <AnchorPane.topAnchor>208.0</AnchorPane.topAnchor>
         </Button>
