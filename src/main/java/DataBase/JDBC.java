@@ -4,10 +4,10 @@ import java.sql.*;
 
 public class JDBC {
 
-    private String url = "jdbc:mysql://127.0.0.1:3306/IM";
+    private String url = "jdbc:mysql://127.0.0.1:3306/im";
     private String driverName = "com.mysql.cj.jdbc.Driver";
     private String username = "root";
-    private String password = "224353Y1560x";
+    private String password = "55611224";
 
     private static Connection conn = null;
 
